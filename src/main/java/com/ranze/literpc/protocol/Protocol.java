@@ -1,5 +1,6 @@
 package com.ranze.literpc.protocol;
 
+import com.ranze.literpc.client.LiteRpcClient;
 import io.netty.buffer.ByteBuf;
 
 
@@ -18,11 +19,11 @@ public interface Protocol {
         }
     }
 
-    void encodeRequest(ByteBuf byteBuf, RpcRequest rpcRequest) throws Exception;
+    ByteBuf encodeRequest(RpcRequest rpcRequest) throws Exception;
 
     RpcRequest decodeRequest(ByteBuf byteBuf) throws Exception;
 
-    void encodeResponse(ByteBuf byteBuf, RpcResponse rpcResponse) throws Exception;
+    ByteBuf encodeResponse(RpcResponse rpcResponse) throws Exception;
 
-    RpcResponse decodeResponse(ByteBuf byteBuf) throws Exception;
+    RpcResponse decodeResponse(ByteBuf byteBuf, LiteRpcClient rpcClient) throws Exception;
 }

@@ -6,11 +6,17 @@ import com.ranze.literpc.protocol.RpcResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
 
-public class RpcResponseEncoder extends MessageToByteEncoder<RpcResponse> {
+import java.util.List;
+
+public class RpcResponseEncoder extends MessageToMessageEncoder<RpcResponse> {
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, RpcResponse rpcResponse, ByteBuf byteBuf) throws Exception {
+    protected void encode(ChannelHandlerContext channelHandlerContext, RpcResponse rpcResponse, List<Object> out) throws Exception {
         Protocol protocol = channelHandlerContext.channel().attr(Consts.KEY_PROTOCOL).get();
-        protocol.encodeResponse(byteBuf, rpcResponse);
+        ByteBuf byteBuf = protocol.encodeResponse(rpcResponse);
+        if (byteBuf != null) {
+            out.add(byteBuf);
+        }
     }
 }

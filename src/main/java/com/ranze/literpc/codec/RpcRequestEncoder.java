@@ -6,9 +6,11 @@ import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.RpcRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
 
-public class RpcRequestEncoder extends MessageToByteEncoder<RpcRequest> {
+import java.util.List;
+
+public class RpcRequestEncoder extends MessageToMessageEncoder<RpcRequest> {
     private LiteRpcClient liteRpcClient;
 
     public RpcRequestEncoder(LiteRpcClient client) {
@@ -16,8 +18,11 @@ public class RpcRequestEncoder extends MessageToByteEncoder<RpcRequest> {
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, RpcRequest msg, ByteBuf out) throws Exception {
+    protected void encode(ChannelHandlerContext ctx, RpcRequest msg, List<Object> out) throws Exception {
         Protocol protocol = ctx.channel().attr(Consts.KEY_PROTOCOL).get();
-        protocol.encodeRequest(out, msg);
+        ByteBuf byteBuf = protocol.encodeRequest(msg);
+        if (byteBuf != null) {
+            out.add(byteBuf);
+        }
     }
 }
