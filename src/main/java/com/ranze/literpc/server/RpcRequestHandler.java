@@ -56,4 +56,10 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
         });
 
     }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        ctx.channel().close();
+    }
 }

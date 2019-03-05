@@ -24,6 +24,14 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
         RpcFuture rpcFuture = client.getRpcFuture(msg.getCallId());
         client.removeRpcFuture(msg.getCallId());
         rpcFuture.handleResponse(msg);
+        ctx.channel().close();
 
+
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        ctx.channel().close();
     }
 }
