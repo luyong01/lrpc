@@ -76,8 +76,8 @@ public class LiteRpcClient {
         RpcFuture rpcFuture = new RpcFuture(responseType);
         pendingRpcFutures.put(rpcRequest.getCallId(), rpcFuture);
 
-        String ip = "127.0.0.1";
-        int port = 8020;
+        String ip = rpcClientOption.getServerIp();
+        int port = rpcClientOption.getServerPort();
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
         future.addListener(new ChannelFutureListener() {
             @Override

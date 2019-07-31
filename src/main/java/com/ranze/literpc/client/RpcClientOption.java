@@ -15,6 +15,8 @@ import java.util.Properties;
 @Setter
 public class RpcClientOption {
     private Protocol.Type protocolType;
+    private String serverIp;
+    private int serverPort;
 
     private Map<Protocol.Type, Protocol> protocolMap;
 
@@ -23,6 +25,9 @@ public class RpcClientOption {
         ProtocolUtil.initProtocolMap(protocolMap);
 
         Properties conf = PropsUtil.loadProps(configPath);
+        serverIp = PropsUtil.getString(conf, "service.server.ip");
+        serverPort = PropsUtil.getInt(conf, "service.server.port");
+
         String protocol = PropsUtil.getString(conf, "service.protocol");
         for (Protocol.Type p : protocolMap.keySet()) {
             if (p.getProtocol().equals(protocol)) {
