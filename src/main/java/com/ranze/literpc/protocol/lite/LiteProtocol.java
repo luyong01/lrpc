@@ -177,34 +177,45 @@ public class LiteProtocol implements Protocol {
             return null;
         }
 
+        // mark for reset later if error occurred
+        in.markReaderIndex();
+
         byte[] magicBytes = new byte[4];
         in.readBytes(magicBytes);
         if (!Arrays.equals(magicBytes, MAGIC_HEAD)) {
             log.warn("Magic{} is wrong", new String(magicBytes));
+            in.resetReaderIndex();
             return null;
         }
 
         int bodySize = in.readInt();
         if (in.readableBytes() < bodySize) {
+            in.resetReaderIndex();
             return null;
         }
 
-        LiteRpcPacket liteRpcPacket = new LiteRpcPacket();
+        try {
+            LiteRpcPacket liteRpcPacket = new LiteRpcPacket();
 
-        int metaSize = in.readInt();
-        byte[] metaBytes = new byte[metaSize];
-        in.readBytes(metaBytes);
-        LiteRpcProto.RpcMeta rpcMeta = (LiteRpcProto.RpcMeta) ProtoSerializer.deserialize(
-                LiteRpcProto.RpcMeta.class, metaBytes);
-        liteRpcPacket.setRpcMeta(rpcMeta);
+            int metaSize = in.readInt();
+            byte[] metaBytes = new byte[metaSize];
+            in.readBytes(metaBytes);
+            LiteRpcProto.RpcMeta rpcMeta = (LiteRpcProto.RpcMeta) ProtoSerializer.deserialize(
+                    LiteRpcProto.RpcMeta.class, metaBytes);
+            liteRpcPacket.setRpcMeta(rpcMeta);
 
-        int realBodySize = bodySize - metaSize;
-        if (realBodySize != 0) {
-            ByteBuf bodyBuf = in.readBytes(realBodySize);
-            liteRpcPacket.setBody(bodyBuf);
+            int realBodySize = bodySize - metaSize;
+            if (realBodySize != 0) {
+                ByteBuf bodyBuf = in.readBytes(realBodySize);
+                liteRpcPacket.setBody(bodyBuf);
+            }
+
+            return liteRpcPacket;
+        } catch (Exception e) {
+            log.debug("decode failed, exception = {}", e.getMessage());
+            in.resetReaderIndex();
+            throw new RuntimeException(e);
         }
-
-        return liteRpcPacket;
 
     }
 }
