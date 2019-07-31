@@ -1,8 +1,8 @@
 package com.ranze.literpc.client;
 
 import com.ranze.literpc.exception.ErrorEnum;
-import com.ranze.literpc.protocol.RpcResponse;
 import com.ranze.literpc.exception.RpcException;
+import com.ranze.literpc.protocol.RpcResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
@@ -43,20 +43,28 @@ public class RpcFuture implements Future<RpcResponse> {
     }
 
     @Override
-    public RpcResponse get() throws InterruptedException, ExecutionException {
+    public RpcResponse get() throws InterruptedException {
         countDownLatch.await();
-        return rpcResponse;
+        if (rpcResponse.getException() != null) {
+            throw rpcResponse.getException();
+        } else {
+            return rpcResponse;
+        }
     }
 
     @Override
     public RpcResponse get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         if (countDownLatch.await(timeout, unit)) {
-            return rpcResponse;
+            if (rpcResponse.getException() != null) {
+                throw rpcResponse.getException();
+            } else {
+                return rpcResponse;
+            }
         } else {
             log.warn("Get response time out");
             RpcResponse response = new RpcResponse();
             response.setException(new RpcException(ErrorEnum.TIMEOUT));
-            return response;
+            throw new RpcException(ErrorEnum.TIMEOUT);
         }
     }
 

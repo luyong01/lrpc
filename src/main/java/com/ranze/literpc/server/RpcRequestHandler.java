@@ -12,6 +12,9 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
+
 @Slf4j
 public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
     private LiteRpcServer liteRpcServer;
@@ -34,12 +37,12 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
                     rpcRequest.getMethod().getName()).getTarget();
             Message result = (Message) rpcRequest.getMethod().invoke(target, rpcRequest.getArgs());
 
-            log.info("Process request {}, result={}", rpcRequest, result.toString());
+            log.info("Process request {}, result={}", rpcRequest, Objects.toString(result));
 
             rpcResponse.setResult(result);
-        } catch (Exception e) {
+        } catch (InvocationTargetException e) {
             log.info("Precess request {} cause exception {}", rpcRequest, e.getMessage());
-            rpcResponse.setException(new RpcException(ErrorEnum.SERVICE_EXCEPTION.getCode(), e.getMessage()));
+            rpcResponse.setException(new RpcException(ErrorEnum.SERVICE_EXCEPTION.getCode(), e.getTargetException().getMessage()));
         }
 
 

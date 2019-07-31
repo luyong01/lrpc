@@ -11,4 +11,9 @@ public class HelloServiceImpl implements HelloService {
                 .setEcho("Hello, " + request.getName() + ", bye")
                 .build();
     }
+
+    @Override
+    public HelloServiceProto.HelloResponse exceptionHello(HelloServiceProto.HelloRequest request) {
+        throw new RuntimeException("exception hello");
+    }
 }

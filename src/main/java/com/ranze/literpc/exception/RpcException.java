@@ -21,4 +21,12 @@ public class RpcException extends RuntimeException {
         return reason;
 
     }
+
+    @Override
+    public String toString() {
+        return "RpcException{" +
+                "code=" + code +
+                ", reason='" + reason + '\'' +
+                '}';
+    }
 }
