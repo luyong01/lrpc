@@ -6,7 +6,7 @@ import io.netty.buffer.ByteBuf;
 
 public interface Protocol {
     enum Type {
-        LITE_PROTOCOL("lite_protocol");
+        LITE_RPC("lite_rpc");
 
         final String protocol;
 

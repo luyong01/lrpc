@@ -21,9 +21,9 @@ public class RpcRequestDecoder extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) throws Exception {
         Protocol protocol = channelHandlerContext.channel().attr(Consts.KEY_PROTOCOL).get();
         if (protocol == null) {
-            protocol = liteRpcServer.getProtocol(Protocol.Type.LITE_PROTOCOL);
+            protocol = liteRpcServer.getProtocol(Protocol.Type.LITE_RPC);
             channelHandlerContext.channel().attr(Consts.KEY_PROTOCOL)
-                    .set(liteRpcServer.getProtocol(Protocol.Type.LITE_PROTOCOL));
+                    .set(liteRpcServer.getProtocol(Protocol.Type.LITE_RPC));
         }
 
         RpcRequest rpcRequest = protocol.decodeRequest(byteBuf);

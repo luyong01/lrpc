@@ -38,6 +38,9 @@ public class LiteRpcClient {
 
     private ConcurrentHashMap<Long, RpcFuture> pendingRpcFutures;
 
+    public LiteRpcClient() {
+        this(new RpcClientOption("config-client.properties"));
+    }
 
     public LiteRpcClient(RpcClientOption option) {
         protocolMap = new HashMap<>();

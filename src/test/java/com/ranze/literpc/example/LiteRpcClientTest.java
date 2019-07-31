@@ -8,8 +8,7 @@ import com.ranze.literpc.exception.RpcException;
 
 public class LiteRpcClientTest {
     public static void main(String[] args) {
-        RpcClientOption option = new RpcClientOption();
-        LiteRpcClient liteRpcClient = new LiteRpcClient(option);
+        LiteRpcClient liteRpcClient = new LiteRpcClient();
         HelloService helloService = (HelloService) RpcClientProxy.newProxy(liteRpcClient, HelloService.class);
 
         HelloServiceProto.HelloRequest request = HelloServiceProto.HelloRequest.newBuilder()

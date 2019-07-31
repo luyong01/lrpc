@@ -30,18 +30,18 @@ import java.util.Arrays;
  * request_meta:[service_name][method_name]
  * response_meta:[code][reason]
  */
-@ProtocolType(Protocol.Type.LITE_PROTOCOL)
+@ProtocolType(Protocol.Type.LITE_RPC)
 @Slf4j
-public class LiteProtocol implements Protocol {
-    private static LiteProtocol INSTANCE;
+public class LiteRpcProtocol implements Protocol {
+    private static LiteRpcProtocol INSTANCE;
     private static final byte[] MAGIC_HEAD = "LRPC".getBytes();
     private static final int HEADER_LEN = 12;
 
-    public static LiteProtocol getInstance() {
+    public static LiteRpcProtocol getInstance() {
         if (INSTANCE == null) {
-            synchronized (LiteProtocol.class) {
+            synchronized (LiteRpcProtocol.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = new LiteProtocol();
+                    INSTANCE = new LiteRpcProtocol();
                 }
             }
         }

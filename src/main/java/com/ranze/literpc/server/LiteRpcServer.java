@@ -23,6 +23,8 @@ import java.util.Map;
 public class LiteRpcServer {
     private int port;
 
+    private RpcServerOption rpcServerOption;
+
     private Map<Protocol.Type, Protocol> protocolMap;
 
     private ServerBootstrap serverBootstrap;
@@ -32,13 +34,17 @@ public class LiteRpcServer {
     private EventLoopGroup workerGroup;
     private EventExecutorGroup eventExecutorGroup;
 
-    public LiteRpcServer(int port) {
+    public LiteRpcServer() {
+        this(new RpcServerOption("config-server.properties"));
+    }
+
+    public LiteRpcServer(RpcServerOption option) {
         protocolMap = new HashMap<>();
         ProtocolUtil.initProtocolMap(protocolMap);
 
-        ServiceManager.getInstance().initServiceMap();
+        ServiceManager.getInstance().initServiceMap(option.getServicePackage());
 
-        this.port = port;
+        this.port = option.getPort();
 
         bossGroup = new NioEventLoopGroup();
         workerGroup = new NioEventLoopGroup();

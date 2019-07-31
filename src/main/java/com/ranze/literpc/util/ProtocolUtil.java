@@ -11,6 +11,9 @@ import java.util.Set;
 @Slf4j
 public class ProtocolUtil {
     public static void initProtocolMap(Map<Protocol.Type, Protocol> protocolMap) {
+        if (protocolMap == null) {
+            return;
+        }
         Set<Class<?>> classesWithAnnotation = ClassUtil.getClassesWithAnnotation(
                 "com.ranze.literpc.protocol", ProtocolType.class);
         for (Class<?> clz : classesWithAnnotation) {

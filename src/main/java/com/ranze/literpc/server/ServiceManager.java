@@ -30,9 +30,10 @@ public class ServiceManager {
         return INSTANCE;
     }
 
-    public void initServiceMap() {
+    public void initServiceMap(String servicePackage) {
+        serviceMap.clear();
         Set<Class<?>> classesWithAnnotation = ClassUtil.getClassesWithAnnotation(
-                "com.ranze.literpc.example", Service.class);
+                servicePackage, Service.class);
         for (Class<?> clz : classesWithAnnotation) {
             try {
                 Object obj = clz.newInstance();
