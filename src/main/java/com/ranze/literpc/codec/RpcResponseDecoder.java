@@ -21,6 +21,8 @@ public class RpcResponseDecoder extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         Protocol protocol = ctx.channel().attr(Consts.KEY_PROTOCOL).get();
         RpcResponse rpcResponse = protocol.decodeResponse(in, liteRpcClient);
-        out.add(rpcResponse);
+        if (rpcResponse != null) {
+            out.add(rpcResponse);
+        }
     }
 }

@@ -7,9 +7,11 @@ import com.ranze.literpc.server.LiteRpcServer;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+@Slf4j
 public class RpcRequestDecoder extends ByteToMessageDecoder {
     private LiteRpcServer liteRpcServer;
 
@@ -30,5 +32,12 @@ public class RpcRequestDecoder extends ByteToMessageDecoder {
         if (rpcRequest != null) {
             list.add(rpcRequest);
         }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        log.info("Channel exception caught: {}", cause.getMessage());
+        ctx.close();
     }
 }
