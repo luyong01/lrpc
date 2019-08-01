@@ -3,6 +3,8 @@ package com.ranze.literpc.client;
 import com.ranze.literpc.protocol.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -24,8 +26,16 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
         RpcFuture rpcFuture = client.getRpcFuture(msg.getCallId());
         client.removeRpcFuture(msg.getCallId());
         rpcFuture.handleResponse(msg);
-        ctx.channel().close();
-
+        ctx.close().addListener(new GenericFutureListener<Future<? super Void>>() {
+            @Override
+            public void operationComplete(Future<? super Void> future) throws Exception {
+                if (future.isSuccess()) {
+                    log.info("channel close success");
+                } else {
+                    log.info("channel close failed");
+                }
+            }
+        });
 
     }
 

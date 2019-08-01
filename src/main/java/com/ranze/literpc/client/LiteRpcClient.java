@@ -37,6 +37,7 @@ public class LiteRpcClient {
     private Map<String, Integer> remoteAddress;
 
     private ConcurrentHashMap<Long, RpcFuture> pendingRpcFutures;
+    private NioEventLoopGroup workerGroup;
 
     public LiteRpcClient() {
         this(new RpcClientOption("config-client.properties"));
@@ -54,7 +55,7 @@ public class LiteRpcClient {
 
         this.rpcClientOption = option;
 
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
         bootstrap = new Bootstrap();
         bootstrap
                 .group(workerGroup)
@@ -127,6 +128,10 @@ public class LiteRpcClient {
 
     public boolean removeRpcFuture(long callId) {
         return null != pendingRpcFutures.remove(callId);
+    }
+
+    public void shutdown() throws InterruptedException {
+        workerGroup.shutdownGracefully().sync();
     }
 
 }

@@ -28,6 +28,12 @@ public class LiteRpcClientTest {
             System.out.println("Response error, " + e.toString());
         }
 
+        try {
+            liteRpcClient.shutdown();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }
