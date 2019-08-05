@@ -1,18 +1,18 @@
 package com.ranze.literpc.client;
 
+import com.ranze.literpc.client.channel.ChannelManager;
+import com.ranze.literpc.client.channel.ChannelPoolGroup;
 import com.ranze.literpc.codec.RpcRequestEncoder;
 import com.ranze.literpc.codec.RpcResponseDecoder;
 import com.ranze.literpc.cons.Consts;
 import com.ranze.literpc.exception.ErrorEnum;
 import com.ranze.literpc.protocol.Protocol;
-import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.protocol.RpcRequest;
-import com.ranze.literpc.protocol.RpcResponse;
-import com.ranze.literpc.util.ClassUtil;
 import com.ranze.literpc.exception.RpcException;
 import com.ranze.literpc.util.ProtocolUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,6 @@ import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -71,6 +70,11 @@ public class LiteRpcClient {
                         ch.pipeline().addLast(new RpcClientHandler(LiteRpcClient.this));
                     }
                 });
+
+        ChannelManager.getInstance().init(bootstrap);
+        List<InetSocketAddress> list = new ArrayList<>();
+        list.add(new InetSocketAddress("127.0.0.1", 8020));
+        ChannelPoolGroup.getInstance().update(list);
     }
 
     public RpcFuture sendRequest(Protocol.Type protoType, RpcRequest rpcRequest, Type responseType) {
@@ -79,35 +83,51 @@ public class LiteRpcClient {
 
         String ip = rpcClientOption.getServerIp();
         int port = rpcClientOption.getServerPort();
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
-        future.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    log.debug("Connect to {}:{} success", ip, port);
-
-                } else {
-                    log.debug("Connect to {}:{} failed", ip, port);
-                }
-            }
-        });
-        future.syncUninterruptibly();
-        if (future.isSuccess()) {
-            future.channel().attr(Consts.KEY_PROTOCOL).set(protocolMap.get(protoType));
-            ChannelFuture channelFuture = future.channel().writeAndFlush(rpcRequest);
-            channelFuture.awaitUninterruptibly();
-            if (!channelFuture.isSuccess()) {
-                pendingRpcFutures.remove(rpcRequest.getCallId());
-                log.warn("Write and flush data error");
-                throw new RpcException(ErrorEnum.NETWORK_ERROR);
-            } else {
-                return rpcFuture;
-            }
-        } else {
-            log.warn("Network error");
+//        ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
+//        future.addListener(new ChannelFutureListener() {
+//            @Override
+//            public void operationComplete(ChannelFuture future) throws Exception {
+//                if (future.isSuccess()) {
+//                    log.debug("Connect to {}:{} success", ip, port);
+//
+//                } else {
+//                    log.debug("Connect to {}:{} failed", ip, port);
+//                }
+//            }
+//        });
+//        future.syncUninterruptibly();
+//        if (future.isSuccess()) {
+//            future.channel().attr(Consts.KEY_PROTOCOL).set(protocolMap.get(protoType));
+//            ChannelFuture channelFuture = future.channel().writeAndFlush(rpcRequest);
+//            channelFuture.awaitUninterruptibly();
+//            if (!channelFuture.isSuccess()) {
+//                pendingRpcFutures.remove(rpcRequest.getCallId());
+//                log.warn("Write and flush data error");
+//                throw new RpcException(ErrorEnum.NETWORK_ERROR);
+//            } else {
+//                return rpcFuture;
+//            }
+//        } else {
+//            log.warn("Network error");
+//            throw new RpcException(ErrorEnum.NETWORK_ERROR);
+//        }
+        Channel channel = ChannelManager.getInstance().connect(new InetSocketAddress(ip, port), rpcClientOption.getChannelType());
+        channel.attr(Consts.KEY_PROTOCOL).set(protocolMap.get(protoType));
+        ChannelFuture channelFuture = channel.writeAndFlush(rpcRequest);
+        channelFuture.awaitUninterruptibly();
+        if (!channelFuture.isSuccess()) {
+            pendingRpcFutures.remove(rpcRequest.getCallId());
+            log.warn("Write and flush data error");
             throw new RpcException(ErrorEnum.NETWORK_ERROR);
+        } else {
+            return rpcFuture;
         }
 
+
+    }
+
+    public Bootstrap getBootstrap() {
+        return bootstrap;
     }
 
     public long getTransactionId() {

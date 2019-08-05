@@ -1,7 +1,7 @@
 package com.ranze.literpc.client;
 
+import com.ranze.literpc.client.channel.ChannelType;
 import com.ranze.literpc.protocol.Protocol;
-import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.util.PropsUtil;
 import com.ranze.literpc.util.ProtocolUtil;
 import lombok.Getter;

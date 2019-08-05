@@ -1,4 +1,4 @@
-package com.ranze.literpc.client;
+package com.ranze.literpc.client.channel;
 
 public enum ChannelType {
     SHORT("short"),

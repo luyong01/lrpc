@@ -1,5 +1,6 @@
 package com.ranze.literpc.client;
 
+import com.ranze.literpc.client.channel.ChannelManager;
 import com.ranze.literpc.protocol.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -26,22 +27,28 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
         RpcFuture rpcFuture = client.getRpcFuture(msg.getCallId());
         client.removeRpcFuture(msg.getCallId());
         rpcFuture.handleResponse(msg);
-        ctx.close().addListener(new GenericFutureListener<Future<? super Void>>() {
-            @Override
-            public void operationComplete(Future<? super Void> future) throws Exception {
-                if (future.isSuccess()) {
-                    log.info("channel close success");
-                } else {
-                    log.info("channel close failed");
-                }
-            }
-        });
+
+        ChannelManager.getInstance().recycle(client.getOption().getChannelType(), ctx.channel());
+//        ctx.close().addListener(new GenericFutureListener<Future<? super Void>>() {
+//            @Override
+//            public void operationComplete(Future<? super Void> future) throws Exception {
+//                if (future.isSuccess()) {
+//                    log.info("channel close success");
+//                } else {
+//                    log.info("channel close failed");
+//                }
+//            }
+//        });
 
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
-        ctx.channel().close();
+    public void channelInactive(ChannelHandlerContext ctx) {
+        ChannelManager.getInstance().recycle(client.getOption().getChannelType(), ctx.channel());
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        ChannelManager.getInstance().recycle(client.getOption().getChannelType(), ctx.channel());
     }
 }
