@@ -28,7 +28,7 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
         client.removeRpcFuture(msg.getCallId());
         rpcFuture.handleResponse(msg);
 
-        ChannelManager.getInstance().recycle(client.getOption().getChannelType(), ctx.channel());
+        ChannelManager.getInstance().recycle(ctx.channel());
 //        ctx.close().addListener(new GenericFutureListener<Future<? super Void>>() {
 //            @Override
 //            public void operationComplete(Future<? super Void> future) throws Exception {
@@ -44,11 +44,11 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        ChannelManager.getInstance().recycle(client.getOption().getChannelType(), ctx.channel());
+        ChannelManager.getInstance().recycle(ctx.channel());
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        ChannelManager.getInstance().recycle(client.getOption().getChannelType(), ctx.channel());
+        ChannelManager.getInstance().recycle(ctx.channel());
     }
 }

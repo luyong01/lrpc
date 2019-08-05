@@ -71,7 +71,7 @@ public class LiteRpcClient {
                     }
                 });
 
-        ChannelManager.getInstance().init(bootstrap);
+        ChannelManager.getInstance().init(bootstrap, rpcClientOption.getChannelType());
         List<InetSocketAddress> list = new ArrayList<>();
         list.add(new InetSocketAddress("127.0.0.1", 8020));
         ChannelPoolGroup.getInstance().update(list);
@@ -111,7 +111,7 @@ public class LiteRpcClient {
 //            log.warn("Network error");
 //            throw new RpcException(ErrorEnum.NETWORK_ERROR);
 //        }
-        Channel channel = ChannelManager.getInstance().connect(new InetSocketAddress(ip, port), rpcClientOption.getChannelType());
+        Channel channel = ChannelManager.getInstance().connect(new InetSocketAddress(ip, port));
         channel.attr(Consts.KEY_PROTOCOL).set(protocolMap.get(protoType));
         ChannelFuture channelFuture = channel.writeAndFlush(rpcRequest);
         channelFuture.awaitUninterruptibly();

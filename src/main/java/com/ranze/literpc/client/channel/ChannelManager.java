@@ -11,12 +11,18 @@ import java.net.InetSocketAddress;
 public class ChannelManager {
     private static ChannelManager INSTANCE;
 
+    private RpcChannel rpcChannel;
 
     private ChannelManager() {
     }
 
-    public void init(Bootstrap bootstrap) {
+    public void init(Bootstrap bootstrap, ChannelType channelType) {
         ChannelFactory.getInstance().init(bootstrap);
+        if (channelType == ChannelType.SHORT) {
+            rpcChannel = new ShortRpcChannel();
+        } else if (channelType == ChannelType.POOLED) {
+            rpcChannel = new PooledRpcChannel();
+        }
     }
 
     public static ChannelManager getInstance() {
@@ -31,30 +37,11 @@ public class ChannelManager {
     }
 
 
-    public Channel connect(InetSocketAddress address, ChannelType channelType) {
-        if (channelType == ChannelType.SHORT) {
-            return ChannelFactory.getInstance().create(address);
-        } else if (channelType == ChannelType.POOLED) {
-            return ChannelPoolGroup.getInstance().get(address);
-        }
-        return null;
-
+    public Channel connect(InetSocketAddress address) {
+        return rpcChannel.get(address);
     }
 
-    public void recycle(ChannelType channelType, Channel channel) {
-        if (channelType == ChannelType.SHORT) {
-            if (channel.isActive()) {
-                ChannelFuture closeFuture = channel.close();
-                closeFuture.addListener(future -> {
-                    if (future.isSuccess()) {
-                        log.info("Short channel closed success");
-                    } else
-                        log.info("Short channel closed failed, exception: {}", future.cause().getMessage());
-                });
-            }
-        } else if (channelType == ChannelType.POOLED) {
-            ChannelPoolGroup.getInstance().recycle(channel);
-        }
-
+    public void recycle(Channel channel) {
+        rpcChannel.recycle(channel);
     }
 }
