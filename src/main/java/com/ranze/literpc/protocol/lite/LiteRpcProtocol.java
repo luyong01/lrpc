@@ -36,6 +36,12 @@ public class LiteRpcProtocol implements Protocol {
     private static LiteRpcProtocol INSTANCE;
     private static final byte[] MAGIC_HEAD = "LRPC".getBytes();
     private static final int HEADER_LEN = 12;
+    // TODO: 2019/8/6 暂定
+    private static final int MAX_FRAME_LENGTH = 1024 * 1024 * 10;
+
+    private ThreadLocal<Boolean> discardTooLongFrame = ThreadLocal.withInitial(() -> false);
+    private ThreadLocal<Long> bytesToDiscard = ThreadLocal.withInitial(() -> 0L);
+
 
     public static LiteRpcProtocol getInstance() {
         if (INSTANCE == null) {
@@ -173,6 +179,11 @@ public class LiteRpcProtocol implements Protocol {
     }
 
     private LiteRpcPacket decode(ByteBuf in) {
+        boolean discarding = discardTooLongFrame.get();
+        if (discarding) {
+            discardTooLongFrame(in);
+        }
+
         if (in.readableBytes() < HEADER_LEN) {
             return null;
         }
@@ -189,6 +200,11 @@ public class LiteRpcProtocol implements Protocol {
         }
 
         int bodySize = in.readInt();
+        if (bodySize > MAX_FRAME_LENGTH) {
+            exceededFrameLength(in, bodySize);
+            return null;
+        }
+
         if (in.readableBytes() < bodySize) {
             in.resetReaderIndex();
             return null;
@@ -217,5 +233,33 @@ public class LiteRpcProtocol implements Protocol {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private void exceededFrameLength(ByteBuf in, int bodyLength) {
+        long discard = bodyLength - in.readableBytes();
+        if (discard < 0) {
+            in.skipBytes(bodyLength);
+        } else {
+            discardTooLongFrame.set(true);
+            bytesToDiscard.set(discard);
+            in.skipBytes(in.readableBytes());
+        }
+
+        if (discard == 0) {
+            discardTooLongFrame.set(false);
+        }
+
+    }
+
+    private void discardTooLongFrame(ByteBuf in) {
+        long bytesToDiscard = this.bytesToDiscard.get();
+        int localBytesToDiscard = (int) Math.min(bytesToDiscard, in.readableBytes());
+        in.skipBytes(localBytesToDiscard);
+        bytesToDiscard -= localBytesToDiscard;
+        this.bytesToDiscard.set(bytesToDiscard);
+
+        if (bytesToDiscard == 0) {
+            discardTooLongFrame.set(false);
+        }
     }
 }
