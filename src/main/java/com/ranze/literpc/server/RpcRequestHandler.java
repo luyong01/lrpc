@@ -32,6 +32,7 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
         log.info("Receive new request:{}", rpcRequest);
         RpcResponse rpcResponse = new RpcResponse();
         rpcResponse.setCallId(rpcRequest.getCallId());
+        rpcResponse.setCompressType(rpcRequest.getCompressType());
         try {
             Object target = ServiceManager.getInstance().getService(rpcRequest.getService().getCanonicalName(),
                     rpcRequest.getMethod().getName()).getTarget();

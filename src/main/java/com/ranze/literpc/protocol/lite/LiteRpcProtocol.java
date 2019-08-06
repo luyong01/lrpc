@@ -3,6 +3,8 @@ package com.ranze.literpc.protocol.lite;
 import com.google.protobuf.Message;
 import com.ranze.literpc.client.LiteRpcClient;
 import com.ranze.literpc.client.RpcFuture;
+import com.ranze.literpc.compress.Compress;
+import com.ranze.literpc.compress.CompressManager;
 import com.ranze.literpc.exception.RpcException;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.ProtocolType;
@@ -60,8 +62,7 @@ public class LiteRpcProtocol implements Protocol {
 
         LiteRpcProto.RpcMeta.Builder rpcMetaBuilder = LiteRpcProto.RpcMeta.newBuilder();
         rpcMetaBuilder.setCallId(rpcRequest.getCallId());
-        //todo 这里暂定compress为0，表示未压缩
-        rpcMetaBuilder.setCompressType(0);
+        rpcMetaBuilder.setCompressType(rpcRequest.getCompressType().getTypeNo());
         LiteRpcProto.RpcRequest.Builder requestBuilder = LiteRpcProto.RpcRequest.newBuilder();
         requestBuilder.setServiceName(rpcRequest.getService().getCanonicalName());
         requestBuilder.setMethodName(rpcRequest.getMethod().getName());
@@ -69,10 +70,12 @@ public class LiteRpcProtocol implements Protocol {
 
         liteRpcPacket.setRpcMeta(rpcMetaBuilder.build());
 
-        //todo 这部分后续要添加压缩 其它编、解码方法也需要
         Message arg = rpcRequest.getArgs();
-        byte[] argBytes = ProtoSerializer.serialize(arg);
-        liteRpcPacket.setBody(Unpooled.wrappedBuffer(argBytes));
+
+        Compress compress = CompressManager.getInstance().get(rpcRequest.getCompressType());
+        ByteBuf argsProto = compress.compress(arg);
+
+        liteRpcPacket.setBody(argsProto);
 
         return encode(liteRpcPacket);
     }
@@ -95,9 +98,12 @@ public class LiteRpcProtocol implements Protocol {
         request.setMethod(serviceInfo.getMethod());
 
         ByteBuf bodyBuf = liteRpcPacket.getBody();
-        Message body = ProtoSerializer.deserialize(serviceInfo.getRequestClass(),
-                new ByteBufInputStream(bodyBuf));
+
+        Compress compress = CompressManager.getInstance().get(rpcMeta.getCompressType());
+        Message body = compress.unCompress(bodyBuf, serviceInfo.getRequestClass());
+
         request.setArgs(body);
+        request.setCompressType(CompressManager.getInstance().convert(rpcMeta.getCompressType()));
 
         return request;
     }
@@ -108,7 +114,7 @@ public class LiteRpcProtocol implements Protocol {
 
         LiteRpcProto.RpcMeta.Builder rpcMetaBuilder = LiteRpcProto.RpcMeta.newBuilder();
         rpcMetaBuilder.setCallId(rpcResponse.getCallId());
-        rpcMetaBuilder.setCompressType(0);
+        rpcMetaBuilder.setCompressType(rpcResponse.getCompressType().getTypeNo());
         LiteRpcProto.RpcResponse.Builder responseBuilder = LiteRpcProto.RpcResponse.newBuilder();
         if (rpcResponse.getException() != null) {
             responseBuilder.setCode(rpcResponse.getException().getCode());
@@ -116,8 +122,11 @@ public class LiteRpcProtocol implements Protocol {
         } else {
             responseBuilder.setCode(0);
             responseBuilder.setReason("ok");
-            byte[] responseBytes = ProtoSerializer.serialize(rpcResponse.getResult());
-            liteRpcPacket.setBody(Unpooled.wrappedBuffer(responseBytes));
+
+            Compress compress = CompressManager.getInstance().get(rpcResponse.getCompressType());
+            ByteBuf responseByteBuf = compress.compress(rpcResponse.getResult());
+
+            liteRpcPacket.setBody(responseByteBuf);
         }
 
         rpcMetaBuilder.setResponse(responseBuilder.build());
@@ -144,11 +153,12 @@ public class LiteRpcProtocol implements Protocol {
         RpcResponse response = new RpcResponse();
 
         response.setCallId(callId);
+        response.setCompressType(CompressManager.getInstance().convert(rpcMeta.getCompressType()));
 
         if (rpcMeta.getResponse().getCode() == 0) {
             ByteBuf bodyBuf = liteRpcPacket.getBody();
-            Message body = ProtoSerializer.deserialize((Class) future.getResponseType(),
-                    new ByteBufInputStream(bodyBuf));
+            Compress compress = CompressManager.getInstance().get(rpcMeta.getCompressType());
+            Message body = compress.unCompress(bodyBuf, (Class) future.getResponseType());
             response.setResult(body);
         } else {
             LiteRpcProto.RpcResponse rpcResponse = rpcMeta.getResponse();

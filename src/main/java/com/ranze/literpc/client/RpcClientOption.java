@@ -1,6 +1,7 @@
 package com.ranze.literpc.client;
 
 import com.ranze.literpc.client.channel.ChannelType;
+import com.ranze.literpc.compress.Compress;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.util.PropsUtil;
 import com.ranze.literpc.util.ProtocolUtil;
@@ -18,6 +19,7 @@ import java.util.Properties;
 public class RpcClientOption {
     private ChannelType channelType;
     private Protocol.Type protocolType;
+    private Compress.Type compressType;
     private String serverIp;
     private int serverPort;
 
@@ -56,6 +58,21 @@ public class RpcClientOption {
                 break;
             default:
                 throw new RuntimeException("Unrecognized channel type of " + ct);
+        }
+
+        String compressType = PropsUtil.getString(conf, "service.compress");
+        switch (compressType) {
+            case "none":
+                this.compressType = Compress.Type.NONE;
+                break;
+            case "gzip":
+                this.compressType = Compress.Type.GZIP;
+                break;
+            case "zlib":
+                this.compressType = Compress.Type.ZLIB;
+                break;
+            default:
+                throw new RuntimeException("Unsupported compress type: " + compressType);
         }
     }
 }

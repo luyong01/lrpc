@@ -1,6 +1,7 @@
 package com.ranze.literpc.protocol;
 
 import com.google.protobuf.Message;
+import com.ranze.literpc.compress.Compress;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,5 +17,6 @@ public class RpcRequest {
     private Method method;
     // method的参数有且只有一个，并且是protobuf形式的
     private Message args;
+    private Compress.Type compressType;
 
 }
