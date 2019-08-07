@@ -1,5 +1,6 @@
 package com.ranze.literpc.server;
 
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,4 +17,5 @@ public class ServiceInfo {
     private Method method;
     private Object target;
     private Class requestClass;
+    private RateLimiter rateLimiter;
 }

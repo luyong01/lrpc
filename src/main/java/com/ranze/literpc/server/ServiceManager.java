@@ -1,5 +1,6 @@
 package com.ranze.literpc.server;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.util.ClassUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +16,11 @@ public class ServiceManager {
 
     private Map<String, ServiceInfo> serviceMap;
 
+    private Map<String, RateLimiter> rateLimiterMap;
+
     private ServiceManager() {
         serviceMap = new HashMap<>();
+        rateLimiterMap = new HashMap<>();
     }
 
     public static ServiceManager getInstance() {
@@ -37,18 +41,29 @@ public class ServiceManager {
         for (Class<?> clz : classesWithAnnotation) {
             try {
                 Object obj = clz.newInstance();
-                Class<?>[] interfaces = obj.getClass().getInterfaces();
+                Class<?> objClass = obj.getClass();
+                Class<?>[] interfaces = objClass.getInterfaces();
                 if (interfaces.length != 1) {
                     log.error("Service must implements one interface only");
                     throw new RuntimeException("Service must implements one interface only");
                 }
-                Method[] declaredMethods = interfaces[0].getDeclaredMethods();
+                Method[] declaredMethods = objClass.getDeclaredMethods();
                 String serviceName = interfaces[0].getCanonicalName();
                 for (Method declaredMethod : declaredMethods) {
                     String methodName = declaredMethod.getName();
+                    com.ranze.literpc.server.RateLimiter rateLimiterAnnotation =
+                            declaredMethod.getAnnotation(com.ranze.literpc.server.RateLimiter.class);
+
+                    RateLimiter rateLimiter = null;
+                    if (rateLimiterAnnotation != null) {
+                        int limitNum = rateLimiterAnnotation.LimitNum();
+                        rateLimiter = RateLimiter.create(limitNum);
+                    }
+
                     String key = generateKey(serviceName, methodName);
                     ServiceInfo serviceInfo = new ServiceInfo(serviceName, declaredMethod, obj,
-                            declaredMethod.getParameterTypes()[0]);
+                            declaredMethod.getParameterTypes()[0], rateLimiter);
+
 
                     serviceMap.put(key, serviceInfo);
                 }

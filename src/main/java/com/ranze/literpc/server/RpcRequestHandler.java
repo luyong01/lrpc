@@ -1,5 +1,6 @@
 package com.ranze.literpc.server;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.protobuf.Message;
 import com.ranze.literpc.exception.ErrorEnum;
 import com.ranze.literpc.exception.RpcException;
@@ -34,13 +35,20 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
         rpcResponse.setCallId(rpcRequest.getCallId());
         rpcResponse.setCompressType(rpcRequest.getCompressType());
         try {
-            Object target = ServiceManager.getInstance().getService(rpcRequest.getService().getCanonicalName(),
-                    rpcRequest.getMethod().getName()).getTarget();
-            Message result = (Message) rpcRequest.getMethod().invoke(target, rpcRequest.getArgs());
-
-            log.info("Process request {}, result={}", rpcRequest, Objects.toString(result));
-
-            rpcResponse.setResult(result);
+            ServiceInfo serviceInfo = ServiceManager.getInstance().getService(rpcRequest.getService().getCanonicalName(),
+                    rpcRequest.getMethod().getName());
+            RateLimiter rateLimiter = serviceInfo.getRateLimiter();
+            // if rate limiter set
+            if (rateLimiter != null) {
+                if (rateLimiter.tryAcquire()) {
+                    callService(rpcRequest, rpcResponse, serviceInfo);
+                } else {
+                    log.info("Process request {} cause rate limit");
+                    rpcResponse.setException(new RpcException(ErrorEnum.SERVICE_BUSY));
+                }
+            } else {
+                callService(rpcRequest, rpcResponse, serviceInfo);
+            }
         } catch (InvocationTargetException e) {
             log.info("Precess request {} cause exception {}", rpcRequest, e.getMessage());
             rpcResponse.setException(new RpcException(ErrorEnum.SERVICE_EXCEPTION.getCode(), e.getTargetException().getMessage()));
@@ -59,6 +67,15 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
             }
         });
 
+    }
+
+    private void callService(RpcRequest rpcRequest, RpcResponse rpcResponse, ServiceInfo serviceInfo) throws IllegalAccessException, InvocationTargetException {
+        Object target = serviceInfo.getTarget();
+        Message result = (Message) rpcRequest.getMethod().invoke(target, rpcRequest.getArgs());
+
+        log.info("Process request {}, result={}", rpcRequest, Objects.toString(result));
+
+        rpcResponse.setResult(result);
     }
 
     @Override
