@@ -68,8 +68,8 @@ public class RpcClientOption {
             case "gzip":
                 this.compressType = Compress.Type.GZIP;
                 break;
-            case "zlib":
-                this.compressType = Compress.Type.ZLIB;
+            case "snappy":
+                this.compressType = Compress.Type.SNAPPY;
                 break;
             default:
                 throw new RuntimeException("Unsupported compress type: " + compressType);

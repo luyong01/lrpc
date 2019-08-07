@@ -13,7 +13,7 @@ public class CompressManager {
     private CompressManager() {
         noneCompress = new NoneCompress();
         gzipCompress = new GzipCompress();
-        zlibCompress = new ZlibCompress();
+        zlibCompress = new SnappyCompress();
 
     }
 
@@ -33,8 +33,8 @@ public class CompressManager {
             return Type.NONE;
         } else if (compressTypeNo == Type.GZIP.getTypeNo()) {
             return Type.GZIP;
-        } else if (compressTypeNo == Type.ZLIB.getTypeNo()) {
-            return Type.ZLIB;
+        } else if (compressTypeNo == Type.SNAPPY.getTypeNo()) {
+            return Type.SNAPPY;
         }
 
         throw new RuntimeException("Unsupported compress type num: " + compressTypeNo);
@@ -46,7 +46,7 @@ public class CompressManager {
             return noneCompress;
         } else if (compressTypeNo == Type.GZIP.getTypeNo()) {
             return gzipCompress;
-        } else if (compressTypeNo == Type.ZLIB.getTypeNo()) {
+        } else if (compressTypeNo == Type.SNAPPY.getTypeNo()) {
             return zlibCompress;
         }
 
@@ -58,7 +58,7 @@ public class CompressManager {
             return noneCompress;
         } else if (compressType == Type.GZIP) {
             return gzipCompress;
-        } else if (compressType == Type.ZLIB) {
+        } else if (compressType == Type.SNAPPY) {
             return zlibCompress;
         }
         throw new RuntimeException("Unsupported compress type: " + compressType.getTypeName());

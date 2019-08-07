@@ -10,7 +10,7 @@ public interface Compress {
     enum Type {
         NONE(1, "none"),
         GZIP(2, "gzip"),
-        ZLIB(3, "zlib");
+        SNAPPY(3, "snappy");
 
         private int typeNo;
         private String typeName;
@@ -29,7 +29,7 @@ public interface Compress {
         }
     }
 
-    ByteBuf compress(Message message);
+    ByteBuf compress(Message message) throws IOException;
 
     Message unCompress(ByteBuf byteBuf, Class clz) throws IllegalAccessException, IOException, InvocationTargetException;
 }
