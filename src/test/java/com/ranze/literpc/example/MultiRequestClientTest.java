@@ -55,10 +55,8 @@ public class MultiRequestClientTest {
                         .build();
                 HelloServiceProto.HelloResponse response = helloService.hello(request);
                 System.out.println("[" + index + "]Response from remote: " + response.getEcho());
-            } catch (RpcException e) {
-                System.out.println("[" + index + "]Response error, " + e.getReason());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                System.out.println("[" + index + "]Response error, " + e.getMessage());
             } finally {
                 countDownLatchEnd.countDown();
             }

@@ -14,7 +14,6 @@ import com.ranze.literpc.server.ServiceInfo;
 import com.ranze.literpc.server.ServiceManager;
 import com.ranze.literpc.codec.ProtoSerializer;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
@@ -118,7 +117,7 @@ public class LiteRpcProtocol implements Protocol {
         LiteRpcProto.RpcResponse.Builder responseBuilder = LiteRpcProto.RpcResponse.newBuilder();
         if (rpcResponse.getException() != null) {
             responseBuilder.setCode(rpcResponse.getException().getCode());
-            responseBuilder.setReason(rpcResponse.getException().getReason());
+            responseBuilder.setReason(rpcResponse.getException().getMessage());
         } else {
             responseBuilder.setCode(0);
             responseBuilder.setReason("ok");

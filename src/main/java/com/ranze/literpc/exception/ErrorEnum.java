@@ -7,19 +7,19 @@ public enum ErrorEnum {
     SERVICE_BUSY(1003, "service busy");
 
     int code;
-    String reason;
+    String message;
 
-    ErrorEnum(int code, String reason) {
+    ErrorEnum(int code, String message) {
         this.code = code;
-        this.reason = reason;
+        this.message = message;
     }
 
     public int getCode() {
         return code;
     }
 
-    public String getReason() {
-        return reason;
+    public String getMessage() {
+        return message;
     }
 
 }

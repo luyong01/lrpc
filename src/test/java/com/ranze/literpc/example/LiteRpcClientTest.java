@@ -24,8 +24,8 @@ public class LiteRpcClientTest {
         try {
             HelloServiceProto.HelloResponse response = helloService.exceptionHello(request);
             System.out.println("Response from remote: " + response.getEcho());
-        } catch (RpcException e) {
-            System.out.println("Response error, " + e.toString());
+        } catch (Exception e) {
+            System.out.println("Response error, " + e.getMessage());
         }
 
         try {
