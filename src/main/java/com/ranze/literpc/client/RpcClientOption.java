@@ -20,6 +20,7 @@ public class RpcClientOption {
     private ChannelType channelType;
     private Protocol.Type protocolType;
     private Compress.Type compressType;
+    private String servicePackage;
     private String serverIp;
     private int serverPort;
 
@@ -30,6 +31,7 @@ public class RpcClientOption {
         ProtocolUtil.initProtocolMap(protocolMap);
 
         Properties conf = PropsUtil.loadProps(configPath);
+        servicePackage = PropsUtil.getString(conf, "service.package");
         serverIp = PropsUtil.getString(conf, "service.server.ip");
         serverPort = PropsUtil.getInt(conf, "service.server.port");
 
@@ -74,5 +76,9 @@ public class RpcClientOption {
             default:
                 throw new RuntimeException("Unsupported compress type: " + compressType);
         }
+    }
+
+    public String getServicePackage() {
+        return servicePackage;
     }
 }

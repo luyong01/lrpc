@@ -3,7 +3,6 @@ package com.ranze.literpc.server;
 import com.ranze.literpc.codec.RpcRequestDecoder;
 import com.ranze.literpc.codec.RpcResponseEncoder;
 import com.ranze.literpc.protocol.Protocol;
-import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.util.ProtocolUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -16,6 +15,7 @@ import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -81,5 +81,9 @@ public class LiteRpcServer {
 
     public Protocol getProtocol(Protocol.Type type) {
         return protocolMap.get(type);
+    }
+
+    public Map<Protocol.Type, Protocol> getProtocols() {
+        return protocolMap;
     }
 }

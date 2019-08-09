@@ -15,12 +15,12 @@ public class ServiceManager {
     private static ServiceManager INSTANCE;
 
     private Map<String, ServiceInfo> serviceMap;
-
-    private Map<String, RateLimiter> rateLimiterMap;
+    private int serviceId = 0;
+    private Map<Integer, ServiceInfo> serviceIdInfoMap;
 
     private ServiceManager() {
         serviceMap = new HashMap<>();
-        rateLimiterMap = new HashMap<>();
+        serviceIdInfoMap = new HashMap<>();
     }
 
     public static ServiceManager getInstance() {
@@ -60,12 +60,14 @@ public class ServiceManager {
                         rateLimiter = RateLimiter.create(limitNum);
                     }
 
+                    int serviceInfoId = serviceId++;
                     String key = generateKey(serviceName, methodName);
                     ServiceInfo serviceInfo = new ServiceInfo(serviceName, declaredMethod, obj,
-                            declaredMethod.getParameterTypes()[0], rateLimiter);
+                            declaredMethod.getParameterTypes()[0], rateLimiter, serviceInfoId);
 
 
                     serviceMap.put(key, serviceInfo);
+                    serviceIdInfoMap.put(serviceInfoId, serviceInfo);
                 }
             } catch (IllegalAccessException | InstantiationException e) {
                 e.printStackTrace();
@@ -76,6 +78,10 @@ public class ServiceManager {
 
     public ServiceInfo getService(String serviceName, String methodName) {
         return serviceMap.get(generateKey(serviceName, methodName));
+    }
+
+    public ServiceInfo getService(int serviceInfoId) {
+        return serviceIdInfoMap.get(serviceInfoId);
     }
 
     private String generateKey(String ServiceName, String methodName) {

@@ -18,4 +18,5 @@ public class ServiceInfo {
     private Object target;
     private Class requestClass;
     private RateLimiter rateLimiter;
+    private int id;
 }

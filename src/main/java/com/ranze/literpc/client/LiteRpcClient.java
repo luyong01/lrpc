@@ -9,6 +9,7 @@ import com.ranze.literpc.exception.ErrorEnum;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.exception.RpcException;
+import com.ranze.literpc.server.ServiceManager;
 import com.ranze.literpc.util.ProtocolUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -45,6 +46,7 @@ public class LiteRpcClient {
     public LiteRpcClient(RpcClientOption option) {
         protocolMap = new HashMap<>();
         ProtocolUtil.initProtocolMap(protocolMap);
+        ServiceManager.getInstance().initServiceMap(option.getServicePackage());
 
         pendingRpcFutures = new ConcurrentHashMap<>();
 
