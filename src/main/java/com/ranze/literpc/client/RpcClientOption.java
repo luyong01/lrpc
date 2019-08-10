@@ -35,23 +35,24 @@ public class RpcClientOption {
         ProtocolUtil.initProtocolMap(protocolMap);
 
         Properties conf = PropsUtil.loadProps(configPath);
+
         servicePackage = PropsUtil.getString(conf, "service.package");
         serverIp = PropsUtil.getString(conf, "service.server.ip");
         serverPort = PropsUtil.getInt(conf, "service.server.port");
-        retryCount = 3;
 
-        String protocol = PropsUtil.getString(conf, "service.protocol");
+        retryCount = PropsUtil.getInt(conf, "service.retry_count", 3);
+
+        String protocol = PropsUtil.getString(conf, "service.protocol", "lite_rpc");
         for (Protocol.Type p : protocolMap.keySet()) {
             if (p.getProtocol().equals(protocol)) {
                 protocolType = p;
             }
         }
-
         if (protocolType == null) {
             throw new RuntimeException("Cannot find protocol for " + protocol);
         }
 
-        String ct = PropsUtil.getString(conf, "service.channel.type");
+        String ct = PropsUtil.getString(conf, "service.channel.type", "pooled");
         switch (ct) {
             case "short":
                 channelType = ChannelType.SHORT;
@@ -67,7 +68,7 @@ public class RpcClientOption {
                 throw new RuntimeException("Unrecognized channel type of " + ct);
         }
 
-        String compressType = PropsUtil.getString(conf, "service.compress");
+        String compressType = PropsUtil.getString(conf, "service.compress", "snappy");
         switch (compressType) {
             case "none":
                 this.compressType = Compress.Type.NONE;

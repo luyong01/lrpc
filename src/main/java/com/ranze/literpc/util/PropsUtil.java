@@ -43,7 +43,7 @@ public class PropsUtil {
         return getString(props, key, "");
     }
 
-    private static String getString(Properties props, String key, String defaultValue) {
+    public static String getString(Properties props, String key, String defaultValue) {
         String value = defaultValue;
         if (props.containsKey(key)) {
             value = props.getProperty(key);
