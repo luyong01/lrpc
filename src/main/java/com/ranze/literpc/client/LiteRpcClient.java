@@ -49,9 +49,11 @@ public class LiteRpcClient {
     }
 
     public LiteRpcClient(RpcClientOption option) {
+        this.rpcClientOption = option;
+
         protocolMap = new HashMap<>();
         ProtocolUtil.initProtocolMap(protocolMap);
-        ServiceManager.getInstance().initServiceMap(option.getServicePackage());
+        ServiceManager.getInstance().initServiceIdKeyMap(rpcClientOption.getServicePackage());
 
         pendingRpcFutures = new ConcurrentHashMap<>();
 
@@ -59,7 +61,6 @@ public class LiteRpcClient {
         remoteAddress = new HashMap<>();
         remoteAddress.put("127.0.0.1", 8020);
 
-        this.rpcClientOption = option;
 
         workerGroup = new NioEventLoopGroup();
         bootstrap = new Bootstrap();

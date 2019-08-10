@@ -1,26 +1,26 @@
 package com.ranze.literpc.server;
 
 import com.google.common.util.concurrent.RateLimiter;
-import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.util.ClassUtil;
 import lombok.extern.slf4j.Slf4j;
+import sun.security.jca.ServiceId;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 public class ServiceManager {
     private static ServiceManager INSTANCE;
 
-    private Map<String, ServiceInfo> serviceMap;
+    private Map<String, ServiceInfo> serviceImplMap;
     private int serviceId = 0;
-    private Map<Integer, ServiceInfo> serviceIdInfoMap;
+    private Map<Integer, String> serviceIdKeyMap;
+    private Map<String, Integer> serviceKeyIdMap;
 
     private ServiceManager() {
-        serviceMap = new HashMap<>();
-        serviceIdInfoMap = new HashMap<>();
+        serviceImplMap = new HashMap<>();
+        serviceIdKeyMap = new HashMap<>();
+        serviceKeyIdMap = new HashMap<>();
     }
 
     public static ServiceManager getInstance() {
@@ -34,10 +34,39 @@ public class ServiceManager {
         return INSTANCE;
     }
 
-    public void initServiceMap(String servicePackage) {
-        serviceMap.clear();
+    public void initServiceIdKeyMap(String servicePackage) {
+        serviceIdKeyMap.clear();
+        serviceKeyIdMap.clear();
+
+        Set<Class<?>> classes = ClassUtil.getClasses(servicePackage, true);
+        // 排序保证每次调用都一致
+        TreeSet<String> keySet = new TreeSet<>();
+        for (Class<?> clz : classes) {
+            if (!clz.isInterface()) {
+                continue;
+            }
+            String className = clz.getCanonicalName();
+            Method[] declaredMethods = clz.getDeclaredMethods();
+            for (Method method : declaredMethods) {
+                String methodName = method.getName();
+                String serviceKey = generateKey(className, methodName);
+                keySet.add(serviceKey);
+            }
+        }
+        for (String serviceKey : keySet) {
+            int id = serviceId++;
+            serviceIdKeyMap.put(id, serviceKey);
+            serviceKeyIdMap.put(serviceKey, id);
+        }
+
+        log.info("ServiceIdKeyMap = {}", serviceIdKeyMap);
+
+    }
+
+    public void initServiceMap(String serviceImplPackage) {
+        serviceImplMap.clear();
         Set<Class<?>> classesWithAnnotation = ClassUtil.getClassesWithAnnotation(
-                servicePackage, Service.class);
+                serviceImplPackage, Service.class);
         for (Class<?> clz : classesWithAnnotation) {
             try {
                 Object obj = clz.newInstance();
@@ -60,28 +89,30 @@ public class ServiceManager {
                         rateLimiter = RateLimiter.create(limitNum);
                     }
 
-                    int serviceInfoId = serviceId++;
                     String key = generateKey(serviceName, methodName);
                     ServiceInfo serviceInfo = new ServiceInfo(serviceName, declaredMethod, obj,
-                            declaredMethod.getParameterTypes()[0], rateLimiter, serviceInfoId);
+                            declaredMethod.getParameterTypes()[0], rateLimiter);
 
 
-                    serviceMap.put(key, serviceInfo);
-                    serviceIdInfoMap.put(serviceInfoId, serviceInfo);
+                    serviceImplMap.put(key, serviceInfo);
                 }
             } catch (IllegalAccessException | InstantiationException e) {
                 e.printStackTrace();
             }
         }
-        log.info("ServiceMap={}", serviceMap);
+        log.info("ServiceMap={}", serviceImplMap);
     }
 
     public ServiceInfo getService(String serviceName, String methodName) {
-        return serviceMap.get(generateKey(serviceName, methodName));
+        return serviceImplMap.get(generateKey(serviceName, methodName));
     }
 
     public ServiceInfo getService(int serviceInfoId) {
-        return serviceIdInfoMap.get(serviceInfoId);
+        return serviceImplMap.get(serviceIdKeyMap.get(serviceInfoId));
+    }
+
+    public int getServiceId(String serviceName, String methodName) {
+        return serviceKeyIdMap.get(generateKey(serviceName, methodName));
     }
 
     private String generateKey(String ServiceName, String methodName) {

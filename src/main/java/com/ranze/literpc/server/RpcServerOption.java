@@ -12,11 +12,14 @@ import java.util.Properties;
 @ToString
 public class RpcServerOption {
     private String servicePackage;
+    private String serviceImplPackage;
     private int port;
 
     public RpcServerOption(String configPath) {
         Properties conf = PropsUtil.loadProps(configPath);
         port = PropsUtil.getInt(conf, "service.port");
         servicePackage = PropsUtil.getString(conf, "service.package");
+        serviceImplPackage = PropsUtil.getString(conf, "service.impl.package");
+
     }
 }

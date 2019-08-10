@@ -1,9 +1,10 @@
-package com.ranze.literpc.example;
+package com.ranze.literpc.example.client;
 
 
 import com.ranze.literpc.client.LiteRpcClient;
 import com.ranze.literpc.client.RpcClientProxy;
-import com.ranze.literpc.exception.RpcException;
+import com.ranze.literpc.example.server.HelloServiceProto;
+import com.ranze.literpc.example.service.HelloService;
 
 import java.util.concurrent.CountDownLatch;
 

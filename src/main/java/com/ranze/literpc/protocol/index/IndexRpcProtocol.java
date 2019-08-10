@@ -53,9 +53,8 @@ public class IndexRpcProtocol implements Protocol {
         indexRpcPacket.setCallId(rpcRequest.getCallId());
         // Compress type 不会太多, byte 够用了, 也许 Compress.Type 中的类型应该用 byte 标记
         indexRpcPacket.setCompressType((byte) rpcRequest.getCompressType().getTypeNo());
-        ServiceInfo serviceInfo = ServiceManager.getInstance().getService(rpcRequest.getService().getCanonicalName(),
-                rpcRequest.getMethod().getName());
-        indexRpcPacket.setRequest_index(serviceInfo.getId());
+        int serviceId = ServiceManager.getInstance().getServiceId(rpcRequest.getService().getCanonicalName(), rpcRequest.getMethod().getName());
+        indexRpcPacket.setRequest_index(serviceId);
         Message args = rpcRequest.getArgs();
 
         Compress compress = CompressManager.getInstance().get(rpcRequest.getCompressType());

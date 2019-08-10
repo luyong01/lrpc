@@ -42,7 +42,8 @@ public class LiteRpcServer {
         protocolMap = new HashMap<>();
         ProtocolUtil.initProtocolMap(protocolMap);
 
-        ServiceManager.getInstance().initServiceMap(option.getServicePackage());
+        ServiceManager.getInstance().initServiceMap(option.getServiceImplPackage());
+        ServiceManager.getInstance().initServiceIdKeyMap(option.getServicePackage());
 
         this.port = option.getPort();
 

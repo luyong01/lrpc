@@ -1,4 +1,4 @@
-package com.ranze.literpc.example;
+package com.ranze.literpc.example.server;
 
 import com.ranze.literpc.server.LiteRpcServer;
 
