@@ -36,6 +36,7 @@ public class RpcClientProxy implements InvocationHandler {
         Type responseType = method.getGenericReturnType();
         RpcFuture rpcFuture = liteRpcClient.sendRequest(liteRpcClient.getOption().getProtocolType(),
                 rpcRequest, responseType);
+        log.info("Request has been sent {}", rpcRequest);
         RpcResponse response = rpcFuture.get();
         return response.getResult();
     }

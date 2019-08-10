@@ -23,6 +23,8 @@ public class ShortRpcChannel implements RpcChannel {
                 } else
                     log.info("Short channel closed failed, exception: {}", future.cause().getMessage());
             });
+        } else {
+            log.info("Channel {} is not active, don't need to recycle");
         }
 
     }

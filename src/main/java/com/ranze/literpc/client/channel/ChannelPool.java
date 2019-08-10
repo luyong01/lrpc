@@ -2,8 +2,8 @@ package com.ranze.literpc.client.channel;
 
 import com.ranze.literpc.cons.Consts;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import jdk.nashorn.internal.runtime.linker.Bootstrap;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -11,6 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 
+@Slf4j
 public class ChannelPool {
     private BlockingQueue<ChannelWrapper> channels;
     private final Object channelsNotEnough = new Object();
@@ -102,6 +103,8 @@ public class ChannelPool {
             for (ChannelWrapper channelWrapper : channels) {
                 if (channelWrapper.getChannel() == channel) {
                     channelWrapper.setInUse(false);
+                    log.info("Return channel {} to pool", channel);
+                    break;
                 }
             }
             channelsNotEnough.notify();
