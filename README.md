@@ -1,3 +1,4 @@
+![Build Status](https://travis-ci.org/ranze16/lrpc.svg?branch=master)
 # lrpc
 
 A lite RPC framework 
