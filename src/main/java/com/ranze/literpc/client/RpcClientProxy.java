@@ -1,6 +1,10 @@
 package com.ranze.literpc.client;
 
 import com.google.protobuf.Message;
+import com.ranze.literpc.interceptor.ConnectInterceptor;
+import com.ranze.literpc.interceptor.Interceptor;
+import com.ranze.literpc.interceptor.RealInterceptorChain;
+import com.ranze.literpc.interceptor.RetryInterceptor;
 import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.protocol.RpcResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +13,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class RpcClientProxy implements InvocationHandler {
@@ -34,10 +40,13 @@ public class RpcClientProxy implements InvocationHandler {
         rpcRequest.setService(proxy.getClass().getInterfaces()[0]);
         rpcRequest.setCompressType(liteRpcClient.getOption().getCompressType());
         Type responseType = method.getGenericReturnType();
-        RpcFuture rpcFuture = liteRpcClient.sendRequest(liteRpcClient.getOption().getProtocolType(),
-                rpcRequest, responseType);
-        log.info("Request has been sent {}", rpcRequest);
-        RpcResponse response = rpcFuture.get();
+
+        List<Interceptor> interceptors = new ArrayList<>(liteRpcClient.getInterceptors());
+        interceptors.add(new RetryInterceptor(liteRpcClient.getOption().getRetryCount()));
+        interceptors.add(new ConnectInterceptor(liteRpcClient, responseType));
+        RealInterceptorChain chain = new RealInterceptorChain(rpcRequest, interceptors, 0);
+        RpcResponse response = chain.proceed(rpcRequest);
+
         return response.getResult();
     }
 

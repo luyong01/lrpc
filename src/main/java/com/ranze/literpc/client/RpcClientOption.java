@@ -1,7 +1,9 @@
 package com.ranze.literpc.client;
 
+import com.google.protobuf.Internal;
 import com.ranze.literpc.client.channel.ChannelType;
 import com.ranze.literpc.compress.Compress;
+import com.ranze.literpc.interceptor.Interceptor;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.util.PropsUtil;
 import com.ranze.literpc.util.ProtocolUtil;
@@ -9,9 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 @Slf4j
 @Getter
@@ -23,10 +23,14 @@ public class RpcClientOption {
     private String servicePackage;
     private String serverIp;
     private int serverPort;
+    private int retryCount;
+    private List<Interceptor> interceptors;
 
     private Map<Protocol.Type, Protocol> protocolMap;
 
     public RpcClientOption(String configPath) {
+        interceptors = new ArrayList<>();
+
         protocolMap = new HashMap<>();
         ProtocolUtil.initProtocolMap(protocolMap);
 
@@ -34,6 +38,7 @@ public class RpcClientOption {
         servicePackage = PropsUtil.getString(conf, "service.package");
         serverIp = PropsUtil.getString(conf, "service.server.ip");
         serverPort = PropsUtil.getInt(conf, "service.server.port");
+        retryCount = 3;
 
         String protocol = PropsUtil.getString(conf, "service.protocol");
         for (Protocol.Type p : protocolMap.keySet()) {

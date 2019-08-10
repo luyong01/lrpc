@@ -6,22 +6,27 @@ import com.ranze.literpc.codec.RpcRequestEncoder;
 import com.ranze.literpc.codec.RpcResponseDecoder;
 import com.ranze.literpc.cons.Consts;
 import com.ranze.literpc.exception.ErrorEnum;
+import com.ranze.literpc.exception.RpcException;
+import com.ranze.literpc.interceptor.Interceptor;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.RpcRequest;
-import com.ranze.literpc.exception.RpcException;
 import com.ranze.literpc.server.ServiceManager;
 import com.ranze.literpc.util.ProtocolUtil;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
-import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
-
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -150,6 +155,14 @@ public class LiteRpcClient {
 
     public boolean removeRpcFuture(long callId) {
         return null != pendingRpcFutures.remove(callId);
+    }
+
+    public List<Interceptor> getInterceptors() {
+        return rpcClientOption.getInterceptors();
+    }
+
+    public void addInterceptor(Interceptor interceptor) {
+        rpcClientOption.getInterceptors().add(interceptor);
     }
 
     public void shutdown() throws InterruptedException {
