@@ -19,7 +19,7 @@ public class RpcException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        return toString();
+        return message;
 
     }
 
