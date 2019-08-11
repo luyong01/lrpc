@@ -62,4 +62,16 @@ public class PropsUtil {
         }
         return value;
     }
+
+    public static long getLong(Properties props, String key) {
+        return getLong(props, key, -1);
+    }
+
+    public static long getLong(Properties props, String key, long defaultValue) {
+        long value = defaultValue;
+        if (props.containsKey(key)) {
+            value = CastUtil.castLong(props.getProperty(key));
+        }
+        return value;
+    }
 }

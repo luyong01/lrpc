@@ -7,6 +7,7 @@ import com.ranze.literpc.protocol.RpcResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class ConnectInterceptor implements Interceptor {
@@ -19,11 +20,12 @@ public class ConnectInterceptor implements Interceptor {
     }
 
     @Override
-    public RpcResponse intercept(Chain chain) throws InterruptedException {
+    public RpcResponse intercept(Chain chain) {
         RpcRequest rpcRequest = chain.rpcRequest();
         RpcFuture rpcFuture = liteRpcClient.sendRequest(liteRpcClient.getOption().getProtocolType(),
                 rpcRequest, responseType);
         log.info("Request has been sent {}", rpcRequest);
-        return rpcFuture.get();
+
+        return rpcFuture.get(liteRpcClient.getOption().getTimeOut(), TimeUnit.MILLISECONDS);
     }
 }

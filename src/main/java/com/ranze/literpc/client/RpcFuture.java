@@ -2,6 +2,7 @@ package com.ranze.literpc.client;
 
 import com.ranze.literpc.exception.ErrorEnum;
 import com.ranze.literpc.exception.RpcException;
+import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.protocol.RpcResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,8 +15,12 @@ public class RpcFuture implements Future<RpcResponse> {
     private CountDownLatch countDownLatch;
     private RpcResponse rpcResponse;
     private Type responseType;
+    private LiteRpcClient rpcClient;
+    private long callId;
 
-    public RpcFuture(Type responseType) {
+    public RpcFuture(LiteRpcClient rpcClient, long callId, Type responseType) {
+        this.rpcClient = rpcClient;
+        this.callId = callId;
         this.responseType = responseType;
         isDone = false;
         countDownLatch = new CountDownLatch(1);
@@ -43,28 +48,28 @@ public class RpcFuture implements Future<RpcResponse> {
     }
 
     @Override
-    public RpcResponse get() throws InterruptedException {
-        countDownLatch.await();
-        if (rpcResponse.getException() != null) {
-            throw rpcResponse.getException();
-        } else {
-            return rpcResponse;
-        }
+    public RpcResponse get() {
+        return get(rpcClient.getOption().getTimeOut(), TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public RpcResponse get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        if (countDownLatch.await(timeout, unit)) {
-            if (rpcResponse.getException() != null) {
-                throw rpcResponse.getException();
+    public RpcResponse get(long timeout, TimeUnit unit) {
+        try {
+            if (countDownLatch.await(timeout, unit)) {
+                if (rpcResponse.getException() != null) {
+                    throw rpcResponse.getException();
+                } else {
+                    return rpcResponse;
+                }
             } else {
-                return rpcResponse;
+                log.warn("Get response time out");
+                throw new RpcException(ErrorEnum.TIMEOUT);
             }
-        } else {
-            log.warn("Get response time out");
-            RpcResponse response = new RpcResponse();
-            response.setException(new RpcException(ErrorEnum.TIMEOUT));
-            throw new RpcException(ErrorEnum.TIMEOUT);
+        } catch (InterruptedException e) {
+            log.warn("CountDownLatch await cause exception: {}", e.getMessage());
+            throw new RuntimeException(e);
+        } finally {
+            rpcClient.removeRpcFuture(callId);
         }
     }
 

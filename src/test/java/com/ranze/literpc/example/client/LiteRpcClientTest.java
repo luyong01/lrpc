@@ -14,7 +14,7 @@ public class LiteRpcClientTest {
         LiteRpcClient liteRpcClient = new LiteRpcClient();
         liteRpcClient.addInterceptor(new Interceptor() {
             @Override
-            public RpcResponse intercept(Chain chain) throws InterruptedException {
+            public RpcResponse intercept(Chain chain) {
                 RpcRequest rpcRequest = chain.rpcRequest();
                 System.out.println("Before proceed, request: " + rpcRequest);
                 RpcResponse response = chain.proceed(rpcRequest);

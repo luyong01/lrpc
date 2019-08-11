@@ -93,7 +93,11 @@ public class ChannelPool {
         if (channels.size() >= maxSize) {
             return;
         }
-        ChannelWrapper channelWrapper = new ChannelWrapper(ChannelFactory.getInstance().create(address));
+        Channel channel = ChannelFactory.getInstance().create(address);
+        if (channel == null) {
+            return;
+        }
+        ChannelWrapper channelWrapper = new ChannelWrapper(channel);
         channelWrapper.getChannel().attr(Consts.KEY_CHANNELPOOL).set(this);
         channels.add(channelWrapper);
     }

@@ -5,6 +5,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 
 @Slf4j
@@ -39,7 +40,11 @@ public class ChannelFactory {
             return null;
         }
         ChannelFuture channelFuture = bootstrap.connect(address);
-        channelFuture.syncUninterruptibly();
+        try {
+            channelFuture.syncUninterruptibly();
+        } catch (Exception e) {
+            log.info("Connect to {} failed, exception = {}", address, e.getMessage());
+        }
         channelFuture.addListener(future -> {
             if (future.isSuccess()) {
                 log.info("Create channel to {} success", address);
@@ -47,6 +52,11 @@ public class ChannelFactory {
                 log.info("Create channel to {} failed, exception = {}", address, future.cause().getMessage());
             }
         });
-        return channelFuture.channel();
+
+        if (channelFuture.channel().isActive()) {
+            return channelFuture.channel();
+        } else {
+            return null;
+        }
     }
 }

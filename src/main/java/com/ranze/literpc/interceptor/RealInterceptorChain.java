@@ -22,7 +22,7 @@ public class RealInterceptorChain implements Interceptor.Chain {
     }
 
     @Override
-    public RpcResponse proceed(RpcRequest rpcRequest) throws InterruptedException {
+    public RpcResponse proceed(RpcRequest rpcRequest) {
         if (index >= interceptors.size()) {
             throw new RuntimeException("Index is bigger than interceptors size");
         }

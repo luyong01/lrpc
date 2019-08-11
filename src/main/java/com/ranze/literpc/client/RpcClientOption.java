@@ -24,6 +24,7 @@ public class RpcClientOption {
     private String serverIp;
     private int serverPort;
     private int retryCount;
+    private long timeOut; // 毫秒
     private List<Interceptor> interceptors;
 
     private Map<Protocol.Type, Protocol> protocolMap;
@@ -41,6 +42,7 @@ public class RpcClientOption {
         serverPort = PropsUtil.getInt(conf, "service.server.port");
 
         retryCount = PropsUtil.getInt(conf, "service.retry_count", 3);
+        timeOut = PropsUtil.getLong(conf, "service.time_out", 10000);
 
         String protocol = PropsUtil.getString(conf, "service.protocol", "lite_rpc");
         for (Protocol.Type p : protocolMap.keySet()) {

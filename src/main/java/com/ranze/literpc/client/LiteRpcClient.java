@@ -86,7 +86,7 @@ public class LiteRpcClient {
     }
 
     public RpcFuture sendRequest(Protocol.Type protoType, RpcRequest rpcRequest, Type responseType) {
-        RpcFuture rpcFuture = new RpcFuture(responseType);
+        RpcFuture rpcFuture = new RpcFuture(this, rpcRequest.getCallId(), responseType);
         pendingRpcFutures.put(rpcRequest.getCallId(), rpcFuture);
 
         String ip = rpcClientOption.getServerIp();
@@ -119,12 +119,18 @@ public class LiteRpcClient {
 //            log.warn("Network error");
 //            throw new RpcException(ErrorEnum.NETWORK_ERROR);
 //        }
-        Channel channel = ChannelManager.getInstance().connect(new InetSocketAddress(ip, port));
+        InetSocketAddress address = new InetSocketAddress(ip, port);
+        Channel channel = ChannelManager.getInstance().connect(address);
+        if (channel == null) {
+            log.info("Cannot connect to address:{}, channel is null", address);
+            removeRpcFuture(rpcRequest.getCallId());
+            throw new RpcException(ErrorEnum.NETWORK_ERROR);
+        }
         channel.attr(Consts.KEY_PROTOCOL).set(protocolMap.get(protoType));
         ChannelFuture channelFuture = channel.writeAndFlush(rpcRequest);
         channelFuture.awaitUninterruptibly();
         if (!channelFuture.isSuccess()) {
-            pendingRpcFutures.remove(rpcRequest.getCallId());
+            removeRpcFuture(rpcRequest.getCallId());
             log.warn("Write and flush data error");
             throw new RpcException(ErrorEnum.NETWORK_ERROR);
         } else {
