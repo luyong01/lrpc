@@ -2,7 +2,8 @@ package com.ranze.literpc.client.channel;
 
 public enum ChannelType {
     SHORT("short"),
-    POOLED("pooled");
+    POOLED("pooled"),
+    SINGLETON("singleton");
 
     private String type;
 

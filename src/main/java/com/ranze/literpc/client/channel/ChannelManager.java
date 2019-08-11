@@ -22,6 +22,8 @@ public class ChannelManager {
             rpcChannel = new ShortRpcChannel();
         } else if (channelType == ChannelType.POOLED) {
             rpcChannel = new PooledRpcChannel();
+        } else if (channelType == ChannelType.SINGLETON) {
+            rpcChannel = new SingletonRpcChannel();
         }
     }
 

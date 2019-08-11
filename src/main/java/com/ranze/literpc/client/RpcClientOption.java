@@ -54,7 +54,7 @@ public class RpcClientOption {
             throw new RuntimeException("Cannot find protocol for " + protocol);
         }
 
-        String ct = PropsUtil.getString(conf, "service.channel.type", "pooled");
+        String ct = PropsUtil.getString(conf, "service.channel.type", "singleton");
         switch (ct) {
             case "short":
                 channelType = ChannelType.SHORT;
@@ -62,9 +62,8 @@ public class RpcClientOption {
             case "pooled":
                 channelType = ChannelType.POOLED;
                 break;
-            case "":
-                channelType = ChannelType.POOLED;
-                log.info("Channel type is unset, use pooled for default");
+            case "singleton":
+                channelType = ChannelType.SINGLETON;
                 break;
             default:
                 throw new RuntimeException("Unrecognized channel type of " + ct);

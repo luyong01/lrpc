@@ -52,7 +52,7 @@ public class MultiRequestClientTest {
                 HelloService helloService = (HelloService) RpcClientProxy.newProxy(rpcClient, HelloService.class);
 
                 HelloServiceProto.HelloRequest request = HelloServiceProto.HelloRequest.newBuilder()
-                        .setName("LRPC")
+                        .setName("[" + index + "]LRPC")
                         .build();
                 HelloServiceProto.HelloResponse response = helloService.hello(request);
                 System.out.println("[" + index + "]Response from remote: " + response.getEcho());
