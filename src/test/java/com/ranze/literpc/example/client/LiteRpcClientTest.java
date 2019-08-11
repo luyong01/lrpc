@@ -10,7 +10,7 @@ import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.protocol.RpcResponse;
 
 public class LiteRpcClientTest {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         LiteRpcClient liteRpcClient = new LiteRpcClient();
         liteRpcClient.addInterceptor(new Interceptor() {
             @Override
@@ -23,23 +23,21 @@ public class LiteRpcClientTest {
             }
         });
 
+        // 获取代理类
         HelloService helloService = (HelloService) RpcClientProxy.newProxy(liteRpcClient, HelloService.class);
 
         HelloServiceProto.HelloRequest request = HelloServiceProto.HelloRequest.newBuilder()
                 .setName("LRPC")
                 .build();
         try {
+            // 调用服务
             HelloServiceProto.HelloResponse response = helloService.hello(request);
-            System.out.println("Response from remote: " + response.getEcho());
+            System.out.println("Get Response success: " + response.getEcho());
         } catch (Exception e) {
-            System.out.println("Response error, " + e.getMessage());
+            System.out.println("Get Response error: " + e.getMessage());
         }
 
-        try {
-            liteRpcClient.shutdown();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        liteRpcClient.shutdown();
 
     }
 

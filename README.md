@@ -5,14 +5,14 @@ A lite RPC framework
 
 ## 功能特性
 
-- 提供短链接、连接池
+- 支持短连接、连接池以及长连接
 - 数据可压缩
-- 支持拦截器
+- 提供拦截器
 - 连接超时重试
 - 设定数据传输大小上限
 - 支持多协议以及协议扩展
 - 服务端自动识别协议类型
-- 服务限流
+- 支持服务限流
 
 ## 快速开始
 
@@ -48,11 +48,11 @@ service.compress=snappy
 
 ```java
 public class LiteRpcClientTest {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         LiteRpcClient liteRpcClient = new LiteRpcClient();
         liteRpcClient.addInterceptor(new Interceptor() {
             @Override
-            public RpcResponse intercept(Chain chain) throws InterruptedException {
+            public RpcResponse intercept(Chain chain) {
                 RpcRequest rpcRequest = chain.rpcRequest();
                 System.out.println("Before proceed, request: " + rpcRequest);
                 RpcResponse response = chain.proceed(rpcRequest);
@@ -61,23 +61,21 @@ public class LiteRpcClientTest {
             }
         });
 
+        // 获取代理类
         HelloService helloService = (HelloService) RpcClientProxy.newProxy(liteRpcClient, HelloService.class);
 
         HelloServiceProto.HelloRequest request = HelloServiceProto.HelloRequest.newBuilder()
                 .setName("LRPC")
                 .build();
         try {
+            // 调用服务
             HelloServiceProto.HelloResponse response = helloService.hello(request);
-            System.out.println("Response from remote: " + response.getEcho());
+            System.out.println("Get Response success: " + response.getEcho());
         } catch (Exception e) {
-            System.out.println("Response error, " + e.getMessage());
+            System.out.println("Get Response error: " + e.getMessage());
         }
 
-        try {
-            liteRpcClient.shutdown();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        liteRpcClient.shutdown();
 
     }
 
