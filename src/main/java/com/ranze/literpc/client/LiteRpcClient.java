@@ -131,9 +131,10 @@ public class LiteRpcClient {
         channelFuture.awaitUninterruptibly();
         if (!channelFuture.isSuccess()) {
             removeRpcFuture(rpcRequest.getCallId());
-            log.warn("Write and flush data error");
+            log.warn("Write and flush data error, data = {}", rpcRequest);
             throw new RpcException(ErrorEnum.NETWORK_ERROR);
         } else {
+            log.info("Write and flush data success, date = {}", rpcRequest);
             return rpcFuture;
         }
 
