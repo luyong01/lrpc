@@ -49,7 +49,6 @@ public class LiteRpcServer {
 
         bossGroup = new NioEventLoopGroup();
         workerGroup = new NioEventLoopGroup();
-        eventExecutorGroup = new DefaultEventExecutorGroup(10);
 
         serverBootstrap = new ServerBootstrap();
         serverBootstrap
@@ -63,10 +62,7 @@ public class LiteRpcServer {
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline().addLast(new RpcRequestDecoder(LiteRpcServer.this));
                         socketChannel.pipeline().addLast(new RpcResponseEncoder());
-                        socketChannel.pipeline().addLast(
-                                eventExecutorGroup,
-                                "Request Handler",
-                                new RpcRequestHandler(LiteRpcServer.this));
+                        socketChannel.pipeline().addLast(new RpcRequestHandler(LiteRpcServer.this));
                     }
                 });
     }

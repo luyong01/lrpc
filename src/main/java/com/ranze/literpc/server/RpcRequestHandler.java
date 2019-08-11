@@ -30,53 +30,11 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
             log.warn("Request is null");
             return;
         }
-        log.info("Receive new request:{}", rpcRequest);
-        RpcResponse rpcResponse = new RpcResponse();
-        rpcResponse.setCallId(rpcRequest.getCallId());
-        rpcResponse.setCompressType(rpcRequest.getCompressType());
-        try {
-            ServiceInfo serviceInfo = ServiceManager.getInstance().getService(rpcRequest.getService().getCanonicalName(),
-                    rpcRequest.getMethod().getName());
-            RateLimiter rateLimiter = serviceInfo.getRateLimiter();
-            // if rate limiter set
-            if (rateLimiter != null) {
-                if (rateLimiter.tryAcquire()) {
-                    callService(rpcRequest, rpcResponse, serviceInfo);
-                } else {
-                    log.info("Process request {} cause rate limit");
-                    rpcResponse.setException(new RpcException(ErrorEnum.SERVICE_BUSY));
-                }
-            } else {
-                callService(rpcRequest, rpcResponse, serviceInfo);
-            }
-        } catch (InvocationTargetException e) {
-            log.info("Precess request {} cause exception {}", rpcRequest, e.getMessage());
-            rpcResponse.setException(new RpcException(ErrorEnum.SERVICE_EXCEPTION.getCode(), e.getTargetException().getMessage()));
-        }
+        log.info("Thread: {}, Receive new request:{}", Thread.currentThread().getName(), rpcRequest);
 
-
-        ChannelFuture channelFuture = channelHandlerContext.channel().writeAndFlush(rpcResponse);
-        channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
-            @Override
-            public void operationComplete(Future<? super Void> future) throws Exception {
-                if (future.isSuccess()) {
-                    log.debug("Write response success");
-                } else {
-                    log.warn("Write response error {}", future.cause().getMessage());
-                }
-            }
-        });
-
+        WorkerThreadPool.getInstance().submit(new WorkerThreadPool.Task(channelHandlerContext, rpcRequest));
     }
 
-    private void callService(RpcRequest rpcRequest, RpcResponse rpcResponse, ServiceInfo serviceInfo) throws IllegalAccessException, InvocationTargetException {
-        Object target = serviceInfo.getTarget();
-        Message result = (Message) rpcRequest.getMethod().invoke(target, rpcRequest.getArgs());
-
-        log.info("Process request {}, result={}", rpcRequest, Objects.toString(result));
-
-        rpcResponse.setResult(result);
-    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
