@@ -32,9 +32,9 @@ public class ChannelPoolGroup {
     }
 
 
-    public void update(List<InetSocketAddress> addresses) {
+    public void update(List<InetSocketAddress> addresses, long timeOut) {
         for (InetSocketAddress address : addresses) {
-            channelPoolMap.put(address, new ChannelPool(address));
+            channelPoolMap.put(address, new ChannelPool(address, timeOut));
         }
     }
 
@@ -42,7 +42,9 @@ public class ChannelPoolGroup {
         ChannelPool channelPool = channelPoolMap.get(address);
         if (channelPool != null) {
             Channel channel = channelPool.get();
-            channel.attr(Consts.KEY_CHANNELPOOL).setIfAbsent(channelPool);
+            if (channel != null) {
+                channel.attr(Consts.KEY_CHANNELPOOL).setIfAbsent(channelPool);
+            }
             return channel;
         }
         return null;

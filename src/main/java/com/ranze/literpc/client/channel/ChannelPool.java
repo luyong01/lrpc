@@ -18,19 +18,21 @@ public class ChannelPool {
     private InetSocketAddress address;
     private Bootstrap bootstrap;
     private int maxSize = 5;
+    private long timeOut;
 
-    public ChannelPool(InetSocketAddress address) {
-        this(address, 5);
+    public ChannelPool(InetSocketAddress address, long timeOut) {
+        this(address, 5, timeOut);
     }
 
-    public ChannelPool(InetSocketAddress address, int maxSize) {
+    public ChannelPool(InetSocketAddress address, int maxSize, long timeOut) {
         this.address = address;
         this.maxSize = maxSize;
+        this.timeOut = timeOut;
         channels = new ArrayBlockingQueue<ChannelWrapper>(maxSize);
     }
 
     public Channel get() {
-        return get(-1, null);
+        return get(timeOut, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -66,7 +68,7 @@ public class ChannelPool {
 
                     channel = getFreeChannel();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    log.info("Wait channel caused exception: {}", e.getMessage());
                 }
             }
 

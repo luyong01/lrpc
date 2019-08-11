@@ -41,7 +41,7 @@ public class ChannelFactory {
         }
         ChannelFuture channelFuture = bootstrap.connect(address);
         try {
-            channelFuture.syncUninterruptibly();
+            channelFuture.awaitUninterruptibly();
         } catch (Exception e) {
             log.info("Connect to {} failed, exception = {}", address, e.getMessage());
         }

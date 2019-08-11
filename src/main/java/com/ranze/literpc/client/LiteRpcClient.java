@@ -67,7 +67,7 @@ public class LiteRpcClient {
         bootstrap
                 .group(workerGroup)
                 .channel(NioSocketChannel.class)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) option.getTimeOut())
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .handler(new ChannelInitializer<NioSocketChannel>() {
@@ -82,7 +82,7 @@ public class LiteRpcClient {
         ChannelManager.getInstance().init(bootstrap, rpcClientOption.getChannelType());
         List<InetSocketAddress> list = new ArrayList<>();
         list.add(new InetSocketAddress("127.0.0.1", 8020));
-        ChannelPoolGroup.getInstance().update(list);
+        ChannelPoolGroup.getInstance().update(list, rpcClientOption.getTimeOut());
     }
 
     public RpcFuture sendRequest(Protocol.Type protoType, RpcRequest rpcRequest, Type responseType) {
