@@ -2,6 +2,7 @@ package com.ranze.literpc.server;
 
 import com.ranze.literpc.codec.RpcRequestDecoder;
 import com.ranze.literpc.codec.RpcResponseEncoder;
+import com.ranze.literpc.nameservice.ZookeeperForServer;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.util.ProtocolUtil;
 import io.netty.bootstrap.ServerBootstrap;
@@ -11,11 +12,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collection;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,16 +35,20 @@ public class LiteRpcServer {
     private EventLoopGroup workerGroup;
     private EventExecutorGroup eventExecutorGroup;
 
+    private ZookeeperForServer zookeeperForServer;
+
     public LiteRpcServer() {
         this(new RpcServerOption("config-server.properties"));
     }
 
     public LiteRpcServer(RpcServerOption option) {
+        rpcServerOption = option;
         protocolMap = new HashMap<>();
         ProtocolUtil.initProtocolMap(protocolMap);
 
         ServiceManager.getInstance().initServiceMap(option.getServiceImplPackage());
         ServiceManager.getInstance().initServiceIdKeyMap(option.getServicePackage());
+
 
         this.port = option.getPort();
 
@@ -65,15 +70,32 @@ public class LiteRpcServer {
                         socketChannel.pipeline().addLast(new RpcRequestHandler(LiteRpcServer.this));
                     }
                 });
+
     }
 
     public void start() {
         try {
             serverBootstrap.bind(port).sync();
+
+            String zookeeperAddress = rpcServerOption.getZookeeperIp() + ":" + rpcServerOption.getZookeeperPort();
+            zookeeperForServer = ZookeeperForServer.getInstance(zookeeperAddress);
+            zookeeperForServer.register(getLocalIp(), rpcServerOption.getPort() + "");
         } catch (InterruptedException e) {
             log.error("Server failed to start, {}", e.getMessage());
+            throw new RuntimeException(e);
         }
         log.info("Server started success, port = {}", port);
+    }
+
+    private String getLocalIp() {
+        try {
+            InetAddress addr = InetAddress.getLocalHost();
+            return addr.getHostAddress();
+        } catch (UnknownHostException e) {
+            log.warn("Get local ip caused exception: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+
     }
 
     public Protocol getProtocol(Protocol.Type type) {
