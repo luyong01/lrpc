@@ -12,8 +12,9 @@ A lite RPC framework
 - 设定数据传输大小上限
 - 支持多协议以及协议扩展
 - 服务端自动识别协议类型
-- 支持服务限流
+- 接口可限流
 - 基于 zookeeper 实现服务注册与发现
+- 支持负载均衡
 
 ## 快速开始
 
@@ -47,6 +48,7 @@ service.channel.type=pooled
 service.compress=snappy
 zookeeper.ip=127.0.0.1
 zookeeper.port=2181
+loadbalance=random
 ```
 
 **客户端代码**
