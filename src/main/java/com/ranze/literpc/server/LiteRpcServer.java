@@ -2,7 +2,7 @@ package com.ranze.literpc.server;
 
 import com.ranze.literpc.codec.RpcRequestDecoder;
 import com.ranze.literpc.codec.RpcResponseEncoder;
-import com.ranze.literpc.nameservice.ZookeeperForServer;
+import com.ranze.literpc.nameservice.ZookeeperClient;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.util.ProtocolUtil;
 import io.netty.bootstrap.ServerBootstrap;
@@ -35,7 +35,7 @@ public class LiteRpcServer {
     private EventLoopGroup workerGroup;
     private EventExecutorGroup eventExecutorGroup;
 
-    private ZookeeperForServer zookeeperForServer;
+    private ZookeeperClient zookeeperClient;
 
     public LiteRpcServer() {
         this(new RpcServerOption("config-server.properties"));
@@ -78,8 +78,8 @@ public class LiteRpcServer {
             serverBootstrap.bind(port).sync();
 
             String zookeeperAddress = rpcServerOption.getZookeeperIp() + ":" + rpcServerOption.getZookeeperPort();
-            zookeeperForServer = ZookeeperForServer.getInstance(zookeeperAddress);
-            zookeeperForServer.register(getLocalIp(), rpcServerOption.getPort() + "");
+            zookeeperClient = ZookeeperClient.getInstance(zookeeperAddress);
+            zookeeperClient.register(getLocalIp(), rpcServerOption.getPort() + "");
         } catch (InterruptedException e) {
             log.error("Server failed to start, {}", e.getMessage());
             throw new RuntimeException(e);

@@ -34,7 +34,7 @@ public class ChannelPoolGroup {
 
     public void update(List<InetSocketAddress> addresses, long timeOut) {
         for (InetSocketAddress address : addresses) {
-            channelPoolMap.put(address, new ChannelPool(address, timeOut));
+            channelPoolMap.putIfAbsent(address, new ChannelPool(address, timeOut));
         }
     }
 

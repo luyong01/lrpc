@@ -8,6 +8,7 @@ import com.ranze.literpc.cons.Consts;
 import com.ranze.literpc.exception.ErrorEnum;
 import com.ranze.literpc.exception.RpcException;
 import com.ranze.literpc.interceptor.Interceptor;
+import com.ranze.literpc.nameservice.ZookeeperClient;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.server.ServiceManager;
@@ -39,7 +40,8 @@ public class LiteRpcClient {
     private Bootstrap bootstrap;
     private RpcClientOption rpcClientOption;
 
-    private Map<String, Integer> remoteAddress;
+    private ZookeeperClient zookeeperClient;
+    private List<InetSocketAddress> serverList;
 
     private ConcurrentHashMap<Long, RpcFuture> pendingRpcFutures;
     private NioEventLoopGroup workerGroup;
@@ -58,9 +60,6 @@ public class LiteRpcClient {
         pendingRpcFutures = new ConcurrentHashMap<>();
 
         transactionId = new AtomicLong(0);
-        remoteAddress = new HashMap<>();
-        remoteAddress.put("127.0.0.1", 8020);
-
 
         workerGroup = new NioEventLoopGroup();
         bootstrap = new Bootstrap();
@@ -79,10 +78,29 @@ public class LiteRpcClient {
                     }
                 });
 
-        ChannelManager.getInstance().init(bootstrap, rpcClientOption.getChannelType());
-        List<InetSocketAddress> list = new ArrayList<>();
-        list.add(new InetSocketAddress("127.0.0.1", 8020));
-        ChannelPoolGroup.getInstance().update(list, rpcClientOption.getTimeOut());
+        ChannelManager.getInstance().init(bootstrap, rpcClientOption.getChannelType(), rpcClientOption.getTimeOut());
+
+
+        initServerList();
+
+        ChannelPoolGroup.getInstance().update(serverList, rpcClientOption.getTimeOut());
+    }
+
+    private void initServerList() {
+        zookeeperClient = ZookeeperClient.getInstance(rpcClientOption.getZookeeperAddress());
+        zookeeperClient.updateChildren();
+        serverList = new ArrayList<>();
+        List<String> servers = zookeeperClient.getServerList();
+        for (int i = 0; i < servers.size(); ++i) {
+            String server = servers.get(i);
+            String[] ipAndPort = server.split(":");
+            InetSocketAddress address = new InetSocketAddress(ipAndPort[0], Integer.parseInt(ipAndPort[1]));
+            serverList.add(address);
+        }
+        if (serverList.isEmpty()) {
+            throw new RuntimeException("Server list is empty");
+        }
+        log.info("Init server list: {}", serverList);
     }
 
     public RpcFuture sendRequest(Protocol.Type protoType, RpcRequest rpcRequest, Type responseType) {

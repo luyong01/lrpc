@@ -6,17 +6,23 @@ import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class ChannelManager {
     private static ChannelManager INSTANCE;
 
     private RpcChannel rpcChannel;
+    private long timeOut;
+    private List<InetSocketAddress> addressList;
 
     private ChannelManager() {
+        addressList = new ArrayList<>();
     }
 
-    public void init(Bootstrap bootstrap, ChannelType channelType) {
+    public void init(Bootstrap bootstrap, ChannelType channelType, long timeOut) {
+        this.timeOut = timeOut;
         ChannelFactory.getInstance().init(bootstrap);
         if (channelType == ChannelType.SHORT) {
             rpcChannel = new ShortRpcChannel();
@@ -38,6 +44,14 @@ public class ChannelManager {
         return INSTANCE;
     }
 
+    public void updateAddress(List<InetSocketAddress> addresses) {
+        addressList = addresses;
+        if (rpcChannel instanceof PooledRpcChannel) {
+            PooledRpcChannel pooledRpcChannel = (PooledRpcChannel) rpcChannel;
+            pooledRpcChannel.getChannelPoolGroup().update(addresses, timeOut);
+        }
+
+    }
 
     public Channel connect(InetSocketAddress address) {
         return rpcChannel.get(address);

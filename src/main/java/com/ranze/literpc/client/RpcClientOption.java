@@ -25,6 +25,7 @@ public class RpcClientOption {
     private int serverPort;
     private int retryCount;
     private long timeOut; // 毫秒
+    private String zookeeperAddress;
     private List<Interceptor> interceptors;
 
     private Map<Protocol.Type, Protocol> protocolMap;
@@ -40,6 +41,10 @@ public class RpcClientOption {
         servicePackage = PropsUtil.getString(conf, "service.package");
         serverIp = PropsUtil.getString(conf, "service.server.ip");
         serverPort = PropsUtil.getInt(conf, "service.server.port");
+
+        String zookeeperIp = PropsUtil.getString(conf, "zookeeper.ip");
+        String zookeeperPort = PropsUtil.getString(conf, "zookeeper.port");
+        zookeeperAddress = zookeeperIp + ":" + zookeeperPort;
 
         retryCount = PropsUtil.getInt(conf, "service.retry_count", 3);
         timeOut = PropsUtil.getLong(conf, "service.time_out", 10000);
