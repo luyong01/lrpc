@@ -2,6 +2,7 @@ package com.ranze.literpc.client;
 
 import com.ranze.literpc.client.channel.ChannelManager;
 import com.ranze.literpc.client.channel.ChannelPoolGroup;
+import com.ranze.literpc.client.loadbanlance.LoadBalanceManager;
 import com.ranze.literpc.codec.RpcRequestEncoder;
 import com.ranze.literpc.codec.RpcResponseDecoder;
 import com.ranze.literpc.cons.Consts;
@@ -46,6 +47,8 @@ public class LiteRpcClient {
     private ConcurrentHashMap<Long, RpcFuture> pendingRpcFutures;
     private NioEventLoopGroup workerGroup;
 
+    private LoadBalanceManager loadBalanceManager;
+
     public LiteRpcClient() {
         this(new RpcClientOption("config-client.properties"));
     }
@@ -78,8 +81,8 @@ public class LiteRpcClient {
                     }
                 });
 
+        loadBalanceManager = LoadBalanceManager.getInstance(rpcClientOption.getLoadBalanceType());
         ChannelManager.getInstance().init(bootstrap, rpcClientOption.getChannelType(), rpcClientOption.getTimeOut());
-
 
         initServerList();
 
@@ -107,8 +110,6 @@ public class LiteRpcClient {
         RpcFuture rpcFuture = new RpcFuture(this, rpcRequest.getCallId(), responseType);
         pendingRpcFutures.put(rpcRequest.getCallId(), rpcFuture);
 
-        String ip = rpcClientOption.getServerIp();
-        int port = rpcClientOption.getServerPort();
 //        ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
 //        future.addListener(new ChannelFutureListener() {
 //            @Override
@@ -137,7 +138,7 @@ public class LiteRpcClient {
 //            log.warn("Network error");
 //            throw new RpcException(ErrorEnum.NETWORK_ERROR);
 //        }
-        InetSocketAddress address = new InetSocketAddress(ip, port);
+        InetSocketAddress address = loadBalanceManager.select(serverList);
         Channel channel = ChannelManager.getInstance().connect(address);
         if (channel == null) {
             log.info("Cannot connect to address:{}, channel is null", address);

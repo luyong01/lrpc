@@ -1,7 +1,7 @@
 package com.ranze.literpc.client;
 
-import com.google.protobuf.Internal;
 import com.ranze.literpc.client.channel.ChannelType;
+import com.ranze.literpc.client.loadbanlance.LoadBalancePolicy;
 import com.ranze.literpc.compress.Compress;
 import com.ranze.literpc.interceptor.Interceptor;
 import com.ranze.literpc.protocol.Protocol;
@@ -23,6 +23,7 @@ public class RpcClientOption {
     private String servicePackage;
     private String serverIp;
     private int serverPort;
+    private LoadBalancePolicy.Type loadBalanceType;
     private int retryCount;
     private long timeOut; // 毫秒
     private String zookeeperAddress;
@@ -87,6 +88,21 @@ public class RpcClientOption {
                 break;
             default:
                 throw new RuntimeException("Unsupported compress type: " + compressType);
+        }
+
+        String loadBalance = PropsUtil.getString(conf, "loadbalance");
+        switch (loadBalance) {
+            case "round_robin":
+                loadBalanceType = LoadBalancePolicy.Type.ROUND_ROBIN;
+                break;
+            case "random":
+                loadBalanceType = LoadBalancePolicy.Type.RANDOM;
+                break;
+            case "consist_hash":
+                loadBalanceType = LoadBalancePolicy.Type.CONSIST_HASH;
+                break;
+            default:
+                throw new RuntimeException("Unknown load balance type: " + loadBalance);
         }
     }
 
