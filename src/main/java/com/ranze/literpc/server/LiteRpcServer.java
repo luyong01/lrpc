@@ -105,4 +105,8 @@ public class LiteRpcServer {
     public Map<Protocol.Type, Protocol> getProtocols() {
         return protocolMap;
     }
+
+    public RpcServerOption getRpcServerOption() {
+        return rpcServerOption;
+    }
 }

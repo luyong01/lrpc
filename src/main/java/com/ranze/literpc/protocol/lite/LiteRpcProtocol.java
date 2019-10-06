@@ -10,6 +10,7 @@ import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.protocol.RpcResponse;
+import com.ranze.literpc.server.LiteRpcServer;
 import com.ranze.literpc.server.ServiceInfo;
 import com.ranze.literpc.server.ServiceManager;
 import com.ranze.literpc.codec.ProtoSerializer;
@@ -37,7 +38,7 @@ public class LiteRpcProtocol implements Protocol {
     private static LiteRpcProtocol INSTANCE;
     private static final byte[] MAGIC_HEAD = "LRPC".getBytes();
     private static final int HEADER_LEN = 12;
-    // TODO: 2019/8/6 暂定
+    // 默认大小
     private static final int MAX_FRAME_LENGTH = 1024 * 1024 * 10;
 
     private ThreadLocal<Boolean> discardTooLongFrame = ThreadLocal.withInitial(() -> false);
@@ -80,8 +81,8 @@ public class LiteRpcProtocol implements Protocol {
     }
 
     @Override
-    public RpcRequest decodeRequest(ByteBuf byteBuf) throws Exception {
-        LiteRpcPacket liteRpcPacket = decode(byteBuf);
+    public RpcRequest decodeRequest(ByteBuf byteBuf, LiteRpcServer rpcServer) throws Exception {
+        LiteRpcPacket liteRpcPacket = decode(byteBuf, rpcServer.getRpcServerOption().getMaxFrameLengthInBytes());
         RpcRequest request = new RpcRequest();
         if (liteRpcPacket == null) {
             return null;
@@ -136,7 +137,8 @@ public class LiteRpcProtocol implements Protocol {
 
     @Override
     public RpcResponse decodeResponse(ByteBuf byteBuf, LiteRpcClient rpcClient) throws Exception {
-        LiteRpcPacket liteRpcPacket = decode(byteBuf);
+        // TODO: 2019/10/6 客户端暂时未对数据包大小限制
+        LiteRpcPacket liteRpcPacket = decode(byteBuf, 0);
         if (liteRpcPacket == null) {
             return null;
         }
@@ -187,9 +189,11 @@ public class LiteRpcProtocol implements Protocol {
         return Unpooled.wrappedBuffer(headerBuf, rpcMetaBuf, liteRpcPacket.getBody());
     }
 
-    private LiteRpcPacket decode(ByteBuf in) {
+    private LiteRpcPacket decode(ByteBuf in, long maxFrameLength) {
+        maxFrameLength = maxFrameLength == 0 ? MAX_FRAME_LENGTH : maxFrameLength;
         boolean discarding = discardTooLongFrame.get();
         if (discarding) {
+            log.info("Discarding too long frame");
             discardTooLongFrame(in);
         }
 
@@ -203,13 +207,13 @@ public class LiteRpcProtocol implements Protocol {
         byte[] magicBytes = new byte[4];
         in.readBytes(magicBytes);
         if (!Arrays.equals(magicBytes, MAGIC_HEAD)) {
-            log.warn("Magic{} is wrong", new String(magicBytes));
+            log.warn("Magic '{}' is wrong", new String(magicBytes));
             in.resetReaderIndex();
             return null;
         }
 
         int bodySize = in.readInt();
-        if (bodySize > MAX_FRAME_LENGTH) {
+        if (bodySize > maxFrameLength) {
             exceededFrameLength(in, bodySize);
             return null;
         }
@@ -245,6 +249,7 @@ public class LiteRpcProtocol implements Protocol {
     }
 
     private void exceededFrameLength(ByteBuf in, int bodyLength) {
+        log.info("Exceed frame length");
         long discard = bodyLength - in.readableBytes();
         if (discard < 0) {
             in.skipBytes(bodyLength);

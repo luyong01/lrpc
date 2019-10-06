@@ -1,6 +1,7 @@
 package com.ranze.literpc.codec;
 
 import com.ranze.literpc.cons.Consts;
+import com.ranze.literpc.exception.ExceedFrameLenException;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.protocol.RpcRequest;
@@ -28,17 +29,32 @@ public class RpcRequestDecoder extends ByteToMessageDecoder {
             log.info("Can't find protocol from this channel, search from all protocols");
             for (Map.Entry<Protocol.Type, Protocol> protocolEntry : liteRpcServer.getProtocols().entrySet()) {
                 Protocol p = protocolEntry.getValue();
-                RpcRequest rpcRequest = p.decodeRequest(byteBuf);
+                RpcRequest rpcRequest = null;
+
+                try {
+                    rpcRequest = p.decodeRequest(byteBuf, liteRpcServer);
+                } catch (ExceedFrameLenException e) {
+                    // 如果抛出这个异常，说明协议解析对了，但是长度超出
+                    log.info("Find protocol to decode, but frame length is too long, protocol is {}", protocolEntry.getKey().getProtocol());
+                    channelHandlerContext.channel().attr(Consts.KEY_PROTOCOL).set(p);
+                    break;
+                }
+
                 if (rpcRequest != null) {
                     log.info("Find protocol to decode, protocol is {}", protocolEntry.getKey().getProtocol());
                     list.add(rpcRequest);
                     channelHandlerContext.channel().attr(Consts.KEY_PROTOCOL).set(p);
+                    break;
                 }
             }
         } else {
-            RpcRequest rpcRequest = protocol.decodeRequest(byteBuf);
-            if (rpcRequest != null) {
-                list.add(rpcRequest);
+            try {
+                RpcRequest rpcRequest = protocol.decodeRequest(byteBuf, liteRpcServer);
+                if (rpcRequest != null) {
+                    list.add(rpcRequest);
+                }
+            } catch (ExceedFrameLenException e) {
+                log.info("Exceed frame len exception");
             }
         }
     }

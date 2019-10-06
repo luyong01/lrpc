@@ -16,8 +16,10 @@ public class HelloServiceImpl implements HelloService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        String response = request.getName().length() < 10 ?
+                request.getName() : request.getName().substring(0, 10) + "...";
         return HelloServiceProto.HelloResponse.newBuilder()
-                .setEcho("Hello, " + request.getName() + ", bye")
+                .setEcho("Hello, " + response + ", bye")
                 .build();
     }
 

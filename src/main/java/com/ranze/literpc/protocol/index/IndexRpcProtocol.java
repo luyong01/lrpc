@@ -5,11 +5,13 @@ import com.ranze.literpc.client.LiteRpcClient;
 import com.ranze.literpc.client.RpcFuture;
 import com.ranze.literpc.compress.Compress;
 import com.ranze.literpc.compress.CompressManager;
+import com.ranze.literpc.exception.ExceedFrameLenException;
 import com.ranze.literpc.exception.RpcException;
 import com.ranze.literpc.protocol.Protocol;
 import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.protocol.RpcResponse;
+import com.ranze.literpc.server.LiteRpcServer;
 import com.ranze.literpc.server.ServiceInfo;
 import com.ranze.literpc.server.ServiceManager;
 import com.ranze.literpc.util.StringUtil;
@@ -40,7 +42,7 @@ public class IndexRpcProtocol implements Protocol {
     // from start to body_size
     private static final int HEADER_LEN = 21;
 
-    // TODO: 2019/8/9 暂定
+    // 默认大小
     private static final int MAX_FRAME_LENGTH = 1024 * 1024 * 10;
 
     private ThreadLocal<Boolean> discardTooLongFrame = ThreadLocal.withInitial(() -> false);
@@ -64,8 +66,14 @@ public class IndexRpcProtocol implements Protocol {
         return encode(indexRpcPacket);
     }
 
-    public RpcRequest decodeRequest(ByteBuf byteBuf) throws IllegalAccessException, IOException, InvocationTargetException {
-        IndexRpcPacket indexRpcPacket = decode(byteBuf, true);
+    public RpcRequest decodeRequest(ByteBuf byteBuf, LiteRpcServer rpcServer) throws IllegalAccessException, IOException, InvocationTargetException, ExceedFrameLenException {
+        IndexRpcPacket indexRpcPacket = null;
+        try {
+            indexRpcPacket = decode(byteBuf, true, rpcServer.getRpcServerOption().getMaxFrameLengthInBytes());
+        } catch (ExceedFrameLenException e) {
+            log.info("Decode caused exception: {}", e.getMessage());
+            throw e;
+        }
         if (indexRpcPacket == null) {
             return null;
         }
@@ -115,7 +123,8 @@ public class IndexRpcProtocol implements Protocol {
 
     @Override
     public RpcResponse decodeResponse(ByteBuf byteBuf, LiteRpcClient rpcClient) throws Exception {
-        IndexRpcPacket rpcPacket = decode(byteBuf, false);
+        // TODO: 2019/10/6 客户端暂未对数据包大小限制
+        IndexRpcPacket rpcPacket = decode(byteBuf, false, 0);
         if (rpcPacket == null) {
             return null;
         }
@@ -168,9 +177,11 @@ public class IndexRpcProtocol implements Protocol {
         }
     }
 
-    private IndexRpcPacket decode(ByteBuf in, boolean decodeRequest) {
+    private IndexRpcPacket decode(ByteBuf in, boolean decodeRequest, long maxFrameLength) throws ExceedFrameLenException {
+        maxFrameLength = maxFrameLength == 0 ? MAX_FRAME_LENGTH : maxFrameLength;
         boolean discardingTooLongFrame = discardTooLongFrame.get();
         if (discardingTooLongFrame) {
+            log.info("Discarding too long frame");
             discardingTooLongFrame(in);
         }
 
@@ -182,7 +193,7 @@ public class IndexRpcProtocol implements Protocol {
         byte[] magicBytes = new byte[4];
         in.getBytes(savedIndex, magicBytes);
         if (!Arrays.equals(MAGIC_HEAD, magicBytes)) {
-            log.warn("Magic{} is wrong", new String(magicBytes));
+            log.warn("Magic '{}' is wrong", new String(magicBytes));
             return null;
         }
 
@@ -199,9 +210,10 @@ public class IndexRpcProtocol implements Protocol {
         }
 
         int bodySize = in.readInt();
-        if (bodySize > MAX_FRAME_LENGTH) {
+        log.info("Body size = {}", bodySize);
+        if (bodySize > maxFrameLength) {
             exceededFrameLength(in, bodySize);
-            return null;
+            throw new ExceedFrameLenException("max frame len = " + MAX_FRAME_LENGTH + ", body size = " + bodySize);
         }
 
         if (in.readableBytes() < bodySize) {
@@ -225,6 +237,7 @@ public class IndexRpcProtocol implements Protocol {
     }
 
     private void exceededFrameLength(ByteBuf in, int bodyLength) {
+        log.info("Exceed frame length");
         long discard = bodyLength - in.readableBytes();
         if (discard < 0) {
             in.skipBytes(bodyLength);
