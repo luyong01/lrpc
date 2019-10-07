@@ -3,14 +3,16 @@ package com.ranze.literpc.server;
 import com.google.common.util.concurrent.RateLimiter;
 import com.ranze.literpc.util.ClassUtil;
 import lombok.extern.slf4j.Slf4j;
-import sun.security.jca.ServiceId;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Slf4j
 public class ServiceManager {
-    private static ServiceManager INSTANCE;
+    private static volatile ServiceManager INSTANCE;
 
     private Map<String, ServiceInfo> serviceImplMap;
     private int serviceId = 0;

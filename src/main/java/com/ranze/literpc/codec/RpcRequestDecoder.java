@@ -3,7 +3,6 @@ package com.ranze.literpc.codec;
 import com.ranze.literpc.cons.Consts;
 import com.ranze.literpc.exception.ExceedFrameLenException;
 import com.ranze.literpc.protocol.Protocol;
-import com.ranze.literpc.protocol.ProtocolType;
 import com.ranze.literpc.protocol.RpcRequest;
 import com.ranze.literpc.server.LiteRpcServer;
 import io.netty.buffer.ByteBuf;

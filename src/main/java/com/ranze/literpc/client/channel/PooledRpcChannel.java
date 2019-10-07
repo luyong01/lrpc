@@ -1,7 +1,6 @@
 package com.ranze.literpc.client.channel;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

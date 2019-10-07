@@ -1,14 +1,13 @@
 package com.ranze.literpc.nameservice;
 
 import lombok.extern.slf4j.Slf4j;
-import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.ZkClient;
 
 import java.util.List;
 
 @Slf4j
 public class ZookeeperClient {
-    private static ZookeeperClient INSTANCE;
+    private static volatile ZookeeperClient INSTANCE;
 
     private static final String ROOT_PATH = "/ranze";
     private static final String SERVER_PATH = ROOT_PATH + "/lrpc";

@@ -2,7 +2,6 @@ package com.ranze.literpc.client.channel;
 
 import com.ranze.literpc.cons.Consts;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;

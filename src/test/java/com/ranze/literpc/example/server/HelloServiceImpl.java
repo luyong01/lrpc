@@ -1,6 +1,5 @@
 package com.ranze.literpc.example.server;
 
-import com.ranze.literpc.example.server.HelloServiceProto;
 import com.ranze.literpc.example.service.HelloService;
 import com.ranze.literpc.server.RateLimiter;
 import com.ranze.literpc.server.Service;

@@ -11,7 +11,6 @@ import org.xerial.snappy.SnappyInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 
 @Slf4j
 public class SnappyCompress implements Compress {

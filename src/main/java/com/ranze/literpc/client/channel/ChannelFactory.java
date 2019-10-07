@@ -5,12 +5,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
 
 @Slf4j
 public class ChannelFactory {
-    private static ChannelFactory INSTANCE;
+    private static volatile ChannelFactory INSTANCE;
 
     private Bootstrap bootstrap;
 
